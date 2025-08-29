@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Le-Git</title>
+    <link rel="stylesheet" href="styles/style.css">
+  </head>
+  <body>
+    <button id="dark-mode-toggle">Toggle Dark Mode</button>
+
+    <h1>Welcome to Le-Git</h1>
+    <h1>"Your lecture tracker starts here!"</h1>
+
+    <form id="create-node-form">
+      <input type="text" id="node-name" placeholder="Node Name" required>
+      <select id="node-type">
+        <option value="playlist">Playlist</option>
+        <option value="custom">Custom Group</option>
+      </select>
+      <button type="submit">Create Node</button>
+    </form>
+
+    <div id="capture-video">
+      <button id="capture-btn">Capture Current Video</button>
+    </div>
+
+    <div id="quick-mark">
+      <input type="number" id="mark-up-to" placeholder="Mark up to video #" min="1">
+      <button id="mark-btn">Mark Videos</button>
+    </div>
+
+    <div id="nodes-container"></div>
+
+    <script>
+      const { ipcRenderer } = require('electron');
+
+      // Dark mode
+      const toggleBtn = document.getElementById('dark-mode-toggle');
+      toggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+      });
+
+      // Create node
+      const form = document.getElementById('create-node-form');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('node-name').value;
+        const type = document.getElementById('node-type').value;
+        ipcRenderer.send('create-node', { name, type });
+        form.reset();
+      });
+
+      // Quick mark
+      const markBtn = document.getElementById('mark-btn');
+      markBtn.addEventListener('click', () => {
+        const upTo = parseInt(document.getElementById('mark-up-to').value);
+        if (!upTo || upTo < 1) return;
+        ipcRenderer.send('mark-up-to', { upTo });
+      });
+
+      // Capture video
+      const captureBtn = document.getElementById('capture-btn');
+      captureBtn.addEventListener('click', () => {
+        ipcRenderer.send('capture-video');
+      });
+
+      // Load nodes and attach events dynamically
+      ipcRenderer.on('load-nodes', (event, nodes) => {
+        const container = document.getElementById('nodes-container');
+        container.innerHTML = '';
+        nodes.forEach(node => {
+          const div = document.createElement('div');
+          div.classList.add('node');
+          div.innerHTML = `
+            <span>${node.name} - Progress: ${node.progress}%</span>
+            <input type="checkbox" data-id="${node.id}" ${node.progress === 100 ? 'checked' : ''}>
+            <textarea data-id="${node.id}" placeholder="Add notes...">${node.notes || ''}</textarea>
+            <button class="delete-btn" data-id="${node.id}">Delete</button>
+          `;
+          //added for delete btn
+          div.querySelector('.delete-btn').addEventListener('click', (e) => {
+            const id = e.target.getAttribute('data-id');
+            ipcRenderer.send('delete-node', { id });
+          });
+
+
+          container.appendChild(div);
+
+          // Checkbox event
+          div.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+            const id = e.target.getAttribute('data-id');
+            const progress = e.target.checked ? 100 : 0;
+            ipcRenderer.send('update-progress', { id, progress });
+          });
+
+          // Notes event
+          div.querySelector('textarea').addEventListener('blur', (e) => {
+            const id = e.target.getAttribute('data-id');
+            const text = e.target.value;
+            ipcRenderer.send('save-notes', { id, notes: text });
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
