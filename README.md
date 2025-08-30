@@ -8,6 +8,7 @@
 **Le-Git** = **Lecture + Git** 🎓➕🐙  
 
 Le-Git is your **local desktop lecture tracker** for students at NIT and beyond. Keep track of all your playlists, custom video groups, and lecture progress — all **offline, no cloud required**!  
+the something
 
 Built using **Electron.js** and **SQLite**, Le-Git makes learning organized, seamless, and fun.  
 
