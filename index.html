@@ -141,7 +141,7 @@
             if(!url) return;
             ipcRenderer.send('add-video-to-node', { id, url, ts });
           });
-          
+
           if(node.type === 'custom'){
             ipcRenderer.invoke('get-videos', node.id).then(videos => {
               const ul = div.querySelector('.video-list');
@@ -158,8 +158,6 @@
               });
             });
           }
-
-
 
           container.appendChild(div);
         });
