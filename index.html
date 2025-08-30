@@ -55,7 +55,7 @@
         form.reset();
       });
 
-      // Quick mark
+      // Quick mark (mark nodes up to N)
       const markBtn = document.getElementById('mark-btn');
       markBtn.addEventListener('click', () => {
         const upTo = parseInt(document.getElementById('mark-up-to').value);
@@ -63,7 +63,7 @@
         ipcRenderer.send('mark-up-to', { upTo });
       });
 
-      // Capture video
+      // Capture video UI
       const captureBtn = document.getElementById('capture-btn');
       const captureForm = document.getElementById('capture-form');
       const captureUrl = document.getElementById('capture-url');
@@ -84,84 +84,152 @@
         captureForm.style.display = 'none';
       });
 
-      // Load nodes
+      // Render nodes and attach listeners (dynamically)
       ipcRenderer.on('load-nodes', (event, nodes) => {
         const container = document.getElementById('nodes-container');
         container.innerHTML = '';
         nodes.forEach(node => {
           const div = document.createElement('div');
           div.classList.add('node');
+          // Basic node header + controls
           div.innerHTML = `
-            <span>${node.name} - Progress: ${node.progress}%</span>
-            <input type="checkbox" data-id="${node.id}" ${node.progress === 100 ? 'checked' : ''}>
-            <textarea data-id="${node.id}" placeholder="Add notes...">${node.notes || ''}</textarea>
-            <button class="delete-btn" data-id="${node.id}">Delete</button>
-            <button class="continue-btn" data-id="${node.id}">Continue</button>
-            <button class="up-btn" data-id="${node.id}">↑</button>
-            <button class="down-btn" data-id="${node.id}">↓</button>
-            <div class="custom-videos" data-id="${node.id}">
-              <input type="text" placeholder="Add video URL">
-              <input type="text" placeholder="Timestamp mm:ss">
-              <button class="add-video-btn" data-id="${node.id}">Add</button>
-              <ul class="video-list"></ul>
+            <div class="node-header">
+              <span class="node-title">${node.name}</span>
+              <span class="node-type">[${node.type}]</span>
+              <span class="node-progress">Progress: ${node.progress || 0}%</span>
             </div>
+            <div class="node-controls">
+              <input type="checkbox" class="node-complete" data-id="${node.id}" ${node.progress === 100 ? 'checked' : ''} title="Mark node complete">
+              <button class="continue-btn" data-id="${node.id}">Continue</button>
+              <button class="delete-btn" data-id="${node.id}">Delete</button>
+              <button class="up-btn" data-id="${node.id}">↑</button>
+              <button class="down-btn" data-id="${node.id}">↓</button>
+            </div>
+            <textarea class="node-notes" data-id="${node.id}" placeholder="Add notes...">${node.notes || ''}</textarea>
           `;
 
-          div.querySelector('input[type="checkbox"]').addEventListener('change', e => {
+          // If node is custom, render custom videos area
+          if (node.type === 'custom') {
+            const customHtml = `
+              <div class="custom-area" data-id="${node.id}">
+                <div class="add-video-row">
+                  <input class="add-video-url" type="text" placeholder="Add video URL">
+                  <input class="add-video-ts" type="text" placeholder="Timestamp mm:ss">
+                  <button class="add-video-btn" data-id="${node.id}">Add</button>
+                  <button class="mark-all-btn" data-id="${node.id}">Mark All Watched</button>
+                </div>
+                <ul class="video-list"></ul>
+              </div>
+            `;
+            div.insertAdjacentHTML('beforeend', customHtml);
+          }
+
+          container.appendChild(div);
+
+          // --- Attach events for header controls ---
+          // checkbox complete (for non-custom nodes this sets progress 100/0; for custom nodes it will set all videos watched/unwatched)
+          div.querySelector('.node-complete').addEventListener('change', (e) => {
             const id = e.target.getAttribute('data-id');
-            const progress = e.target.checked ? 100 : 0;
-            ipcRenderer.send('update-progress', { id, progress });
+            const isChecked = e.target.checked;
+            if (node.type === 'custom') {
+              // mark all videos watched/unwatched
+              ipcRenderer.send('mark-all-videos', { id, watched: isChecked ? 1 : 0 });
+            } else {
+              ipcRenderer.send('update-progress', { id, progress: isChecked ? 100 : 0 });
+            }
           });
 
-          div.querySelector('textarea').addEventListener('blur', e => {
-            const id = e.target.getAttribute('data-id');
-            ipcRenderer.send('save-notes', { id, notes: e.target.value });
-          });
-
-          div.querySelector('.delete-btn').addEventListener('click', e => {
-            ipcRenderer.send('delete-node', { id: e.target.getAttribute('data-id') });
-          });
-
+          // continue node (open last_video if exists)
           div.querySelector('.continue-btn').addEventListener('click', e => {
             ipcRenderer.send('continue-node', { id: e.target.getAttribute('data-id') });
           });
 
+          // delete node
+          div.querySelector('.delete-btn').addEventListener('click', e => {
+            const id = e.target.getAttribute('data-id');
+            if (!confirm('Delete this node and all its videos?')) return;
+            ipcRenderer.send('delete-node', { id });
+          });
+
+          // move up / down
           div.querySelector('.up-btn').addEventListener('click', e => {
             ipcRenderer.send('move-node', { id: parseInt(e.target.getAttribute('data-id')), direction: 'up' });
           });
-
           div.querySelector('.down-btn').addEventListener('click', e => {
             ipcRenderer.send('move-node', { id: parseInt(e.target.getAttribute('data-id')), direction: 'down' });
           });
-          div.querySelector('.add-video-btn').addEventListener('click', e => {
-            const id = e.target.getAttribute('data-id');
-            const container = e.target.parentElement;
-            const url = container.querySelector('input:nth-child(1)').value.trim();
-            const ts = container.querySelector('input:nth-child(2)').value.trim() || '00:00';
-            if(!url) return;
-            ipcRenderer.send('add-video-to-node', { id, url, ts });
+
+          // notes save on blur
+          div.querySelector('.node-notes').addEventListener('blur', e => {
+            ipcRenderer.send('save-notes', { id: e.target.getAttribute('data-id'), notes: e.target.value });
           });
 
-          if(node.type === 'custom'){
+          // custom node event bindings
+          if (node.type === 'custom') {
+            const customArea = div.querySelector('.custom-area');
+            const addBtn = customArea.querySelector('.add-video-btn');
+            const urlInput = customArea.querySelector('.add-video-url');
+            const tsInput = customArea.querySelector('.add-video-ts');
+            const markAllBtn = customArea.querySelector('.mark-all-btn');
+            const videoList = customArea.querySelector('.video-list');
+
+            // Add video
+            addBtn.addEventListener('click', () => {
+              const url = urlInput.value.trim();
+              const ts = tsInput.value.trim() || '00:00';
+              if (!url) return;
+              ipcRenderer.send('add-video-to-node', { id: node.id, url, ts });
+              urlInput.value = '';
+              tsInput.value = '';
+            });
+
+            // Mark all (watched)
+            markAllBtn.addEventListener('click', () => {
+              ipcRenderer.send('mark-all-videos', { id: node.id, watched: 1 });
+            });
+
+            // Fetch and render videos for this node
             ipcRenderer.invoke('get-videos', node.id).then(videos => {
-              const ul = div.querySelector('.video-list');
-              ul.innerHTML = '';
+              videoList.innerHTML = '';
               videos.forEach(v => {
                 const li = document.createElement('li');
-                li.innerHTML = `${v.url} (${v.timestamp}) <button class="continue-video-btn" data-url="${v.url}" data-ts="${v.timestamp}">Continue</button>`;
-                ul.appendChild(li);
-                li.querySelector('.continue-video-btn').addEventListener('click', e => {
-                  const url = e.target.getAttribute('data-url');
-                  const ts = e.target.getAttribute('data-ts');
+                li.classList.add('video-item');
+                li.innerHTML = `
+                  <input type="checkbox" class="video-watched" data-id="${v.id}" ${v.watched ? 'checked' : ''} title="Mark watched">
+                  <span class="video-url">${v.url}</span>
+                  <span class="video-ts">(${v.timestamp})</span>
+                  <button class="continue-video-btn" data-url="${v.url}" data-ts="${v.timestamp}">Continue</button>
+                  <button class="del-video-btn" data-id="${v.id}">Delete</button>
+                `;
+                videoList.appendChild(li);
+
+                // watched toggle
+                li.querySelector('.video-watched').addEventListener('change', (ev) => {
+                  const vid = ev.target.getAttribute('data-id');
+                  const watched = ev.target.checked ? 1 : 0;
+                  ipcRenderer.send('toggle-video-watched', { videoId: vid, watched, nodeId: node.id });
+                });
+
+                // continue this video
+                li.querySelector('.continue-video-btn').addEventListener('click', (ev) => {
+                  const url = ev.target.getAttribute('data-url');
+                  const ts = ev.target.getAttribute('data-ts');
                   ipcRenderer.send('continue-video', { url, ts });
                 });
-              });
-            });
-          }
 
-          container.appendChild(div);
-        });
-      });
+                // delete this video
+                li.querySelector('.del-video-btn').addEventListener('click', (ev) => {
+                  const vid = ev.target.getAttribute('data-id');
+                  if (!confirm('Delete this video?')) return;
+                  ipcRenderer.send('delete-custom-video', { videoId: vid, nodeId: node.id });
+                });
+              });
+            }).catch(err => {
+              console.error('get-videos error', err);
+            });
+          } // end custom node handling
+        }); // end nodes.forEach
+      }); // end load-nodes
     </script>
   </body>
 </html>

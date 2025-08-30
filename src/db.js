@@ -13,21 +13,22 @@ db.serialize(() => {
     order_index INTEGER DEFAULT 0
   )`);
 
-  // Recalculate order_index for existing rows
+  // Ensure order_index for existing rows (only set if null/0 ambiguous - keep simple)
   db.all(`SELECT * FROM nodes ORDER BY id ASC`, [], (err, rows) => {
     if (err) return console.error(err.message);
     rows.forEach((r, i) => {
       db.run(`UPDATE nodes SET order_index = ? WHERE id = ?`, [i, r.id]);
     });
   });
-});
 
-//for custom video playlist
-db.run(`CREATE TABLE IF NOT EXISTS custom_videos (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  node_id INTEGER,
-  url TEXT,
-  timestamp TEXT
-)`);
+  // custom_videos: store multiple videos for a custom node
+  db.run(`CREATE TABLE IF NOT EXISTS custom_videos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    node_id INTEGER,
+    url TEXT,
+    timestamp TEXT,
+    watched INTEGER DEFAULT 0
+  )`);
+});
 
 module.exports = db;
