@@ -114,4 +114,4 @@ le-git/
 
 ## 📝 License
 
-MIT License
+MIT License © 2025 Free to use, modify, and share.
