@@ -8,37 +8,18 @@ db.serialize(() => {
     type TEXT,
     progress INTEGER,
     last_video TEXT,
-    last_timestamp TEXT
+    last_timestamp TEXT,
+    notes TEXT,
+    order_index INTEGER DEFAULT 0
   )`);
+
+  // Recalculate order_index for existing rows
+  db.all(`SELECT * FROM nodes ORDER BY id ASC`, [], (err, rows) => {
+    if (err) return console.error(err.message);
+    rows.forEach((r, i) => {
+      db.run(`UPDATE nodes SET order_index = ? WHERE id = ?`, [i, r.id]);
+    });
+  });
 });
 
 module.exports = db;
-
-// existing code above
-
-// Test insert + fetch
-db.run(`INSERT INTO nodes (name, type, progress, last_video, last_timestamp) 
-        VALUES (?, ?, ?, ?, ?)`, 
-        ["Test Node", "playlist", 0, "none", "00:00"], 
-        function(err) {
-  if (err) return console.error(err.message);
-  console.log("Inserted a test node with ID:", this.lastID);
-
-  db.all(`SELECT * FROM nodes`, (err, rows) => {
-    if (err) return console.error(err.message);
-    console.log("Current nodes:", rows);
-  });
-});
-
-// Test insert
-db.run(`INSERT INTO nodes (name, type, progress, last_video, last_timestamp) VALUES (?, ?, ?, ?, ?)`,
-  ['Test Node', 'playlist', 0, '', ''], function(err) {
-    if (err) return console.error(err.message);
-    console.log(`Inserted node with ID ${this.lastID}`);
-  });
-
-// Test fetch
-db.all(`SELECT * FROM nodes`, [], (err, rows) => {
-  if (err) return console.error(err.message);
-  console.log('All nodes:', rows);
-});

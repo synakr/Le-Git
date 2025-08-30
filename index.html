@@ -9,7 +9,7 @@
     <button id="dark-mode-toggle">Toggle Dark Mode</button>
 
     <h1>Welcome to Le-Git</h1>
-    <h1>"Your lecture tracker starts here!"</h1>
+    <h2>Your lecture tracker starts here!</h2>
 
     <form id="create-node-form">
       <input type="text" id="node-name" placeholder="Node Name" required>
@@ -22,6 +22,11 @@
 
     <div id="capture-video">
       <button id="capture-btn">Capture Current Video</button>
+    </div>
+    <div id="capture-form" style="display:none; gap:5px; margin-top:5px;">
+      <input type="text" id="capture-url" placeholder="YouTube URL">
+      <input type="text" id="capture-ts" placeholder="Timestamp mm:ss">
+      <button id="capture-save-btn">Save</button>
     </div>
 
     <div id="quick-mark">
@@ -60,11 +65,26 @@
 
       // Capture video
       const captureBtn = document.getElementById('capture-btn');
+      const captureForm = document.getElementById('capture-form');
+      const captureUrl = document.getElementById('capture-url');
+      const captureTs = document.getElementById('capture-ts');
+      const captureSaveBtn = document.getElementById('capture-save-btn');
+
       captureBtn.addEventListener('click', () => {
-        ipcRenderer.send('capture-video');
+        captureForm.style.display = captureForm.style.display === 'none' ? 'flex' : 'none';
       });
 
-      // Load nodes and attach events dynamically
+      captureSaveBtn.addEventListener('click', () => {
+        const url = captureUrl.value.trim();
+        const ts = captureTs.value.trim() || '00:00';
+        if(!url) return;
+        ipcRenderer.send('capture-video-ui', { url, ts });
+        captureUrl.value = '';
+        captureTs.value = '';
+        captureForm.style.display = 'none';
+      });
+
+      // Load nodes
       ipcRenderer.on('load-nodes', (event, nodes) => {
         const container = document.getElementById('nodes-container');
         container.innerHTML = '';
@@ -76,29 +96,39 @@
             <input type="checkbox" data-id="${node.id}" ${node.progress === 100 ? 'checked' : ''}>
             <textarea data-id="${node.id}" placeholder="Add notes...">${node.notes || ''}</textarea>
             <button class="delete-btn" data-id="${node.id}">Delete</button>
+            <button class="continue-btn" data-id="${node.id}">Continue</button>
+            <button class="up-btn" data-id="${node.id}">↑</button>
+            <button class="down-btn" data-id="${node.id}">↓</button>
           `;
-          //added for delete btn
-          div.querySelector('.delete-btn').addEventListener('click', (e) => {
-            const id = e.target.getAttribute('data-id');
-            ipcRenderer.send('delete-node', { id });
-          });
 
-
-          container.appendChild(div);
-
-          // Checkbox event
-          div.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+          div.querySelector('input[type="checkbox"]').addEventListener('change', e => {
             const id = e.target.getAttribute('data-id');
             const progress = e.target.checked ? 100 : 0;
             ipcRenderer.send('update-progress', { id, progress });
           });
 
-          // Notes event
-          div.querySelector('textarea').addEventListener('blur', (e) => {
+          div.querySelector('textarea').addEventListener('blur', e => {
             const id = e.target.getAttribute('data-id');
-            const text = e.target.value;
-            ipcRenderer.send('save-notes', { id, notes: text });
+            ipcRenderer.send('save-notes', { id, notes: e.target.value });
           });
+
+          div.querySelector('.delete-btn').addEventListener('click', e => {
+            ipcRenderer.send('delete-node', { id: e.target.getAttribute('data-id') });
+          });
+
+          div.querySelector('.continue-btn').addEventListener('click', e => {
+            ipcRenderer.send('continue-node', { id: e.target.getAttribute('data-id') });
+          });
+
+          div.querySelector('.up-btn').addEventListener('click', e => {
+            ipcRenderer.send('move-node', { id: parseInt(e.target.getAttribute('data-id')), direction: 'up' });
+          });
+
+          div.querySelector('.down-btn').addEventListener('click', e => {
+            ipcRenderer.send('move-node', { id: parseInt(e.target.getAttribute('data-id')), direction: 'down' });
+          });
+
+          container.appendChild(div);
         });
       });
     </script>
