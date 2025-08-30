@@ -132,4 +132,37 @@ ipcMain.on('move-node', (event, data)=>{
   });
 });
 
+// For custom video group
+ipcMain.on('add-video-to-node', (event, data) => {
+  db.run(`INSERT INTO custom_videos (node_id, url, timestamp) VALUES (?, ?, ?)`,
+    [data.id, data.url, data.ts], function(err){
+      if(err) return console.error(err.message);
+      // reload nodes (later can fetch video list)
+      db.all(`SELECT * FROM nodes`, [], (err, rows) => {
+        if(err) return;
+        event.sender.send('load-nodes', rows);
+      });
+    });
+});
+
+ipcMain.handle('get-videos', (event, nodeId) => {
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT * FROM custom_videos WHERE node_id = ?`, [nodeId], (err, rows) => {
+      if(err) reject(err);
+      else resolve(rows);
+    });
+  });
+});
+
+ipcMain.on('continue-video', (event, data) => {
+  const parts = data.ts.split(':');
+  let seconds = 0;
+  if(parts.length === 2) seconds = parseInt(parts[0])*60 + parseInt(parts[1]);
+  else seconds = parseInt(parts[0]);
+  const urlWithTime = `${data.url}?t=${seconds}s`;
+  shell.openExternal(urlWithTime);
+});
+
+
+
 app.whenReady().then(createWindow);

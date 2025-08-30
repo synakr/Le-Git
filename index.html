@@ -99,6 +99,12 @@
             <button class="continue-btn" data-id="${node.id}">Continue</button>
             <button class="up-btn" data-id="${node.id}">↑</button>
             <button class="down-btn" data-id="${node.id}">↓</button>
+            <div class="custom-videos" data-id="${node.id}">
+              <input type="text" placeholder="Add video URL">
+              <input type="text" placeholder="Timestamp mm:ss">
+              <button class="add-video-btn" data-id="${node.id}">Add</button>
+              <ul class="video-list"></ul>
+            </div>
           `;
 
           div.querySelector('input[type="checkbox"]').addEventListener('change', e => {
@@ -127,6 +133,33 @@
           div.querySelector('.down-btn').addEventListener('click', e => {
             ipcRenderer.send('move-node', { id: parseInt(e.target.getAttribute('data-id')), direction: 'down' });
           });
+          div.querySelector('.add-video-btn').addEventListener('click', e => {
+            const id = e.target.getAttribute('data-id');
+            const container = e.target.parentElement;
+            const url = container.querySelector('input:nth-child(1)').value.trim();
+            const ts = container.querySelector('input:nth-child(2)').value.trim() || '00:00';
+            if(!url) return;
+            ipcRenderer.send('add-video-to-node', { id, url, ts });
+          });
+          
+          if(node.type === 'custom'){
+            ipcRenderer.invoke('get-videos', node.id).then(videos => {
+              const ul = div.querySelector('.video-list');
+              ul.innerHTML = '';
+              videos.forEach(v => {
+                const li = document.createElement('li');
+                li.innerHTML = `${v.url} (${v.timestamp}) <button class="continue-video-btn" data-url="${v.url}" data-ts="${v.timestamp}">Continue</button>`;
+                ul.appendChild(li);
+                li.querySelector('.continue-video-btn').addEventListener('click', e => {
+                  const url = e.target.getAttribute('data-url');
+                  const ts = e.target.getAttribute('data-ts');
+                  ipcRenderer.send('continue-video', { url, ts });
+                });
+              });
+            });
+          }
+
+
 
           container.appendChild(div);
         });

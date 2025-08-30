@@ -22,4 +22,12 @@ db.serialize(() => {
   });
 });
 
+//for custom video playlist
+db.run(`CREATE TABLE IF NOT EXISTS custom_videos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  node_id INTEGER,
+  url TEXT,
+  timestamp TEXT
+)`);
+
 module.exports = db;
