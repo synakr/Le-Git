@@ -5,6 +5,8 @@
 [![SQLite](https://img.shields.io/badge/SQLite-3.42.0-lightgrey)](https://www.sqlite.org/)
 [![Version](https://img.shields.io/badge/Version-1.0.0-green)](https://github.com/your-username/le-git)
 
+**Le-Git** = **Lecture + Git** 🎓➕🐙  
+
 Le-Git is your **local desktop lecture tracker** for students at NIT and beyond. Keep track of all your playlists, custom video groups, and lecture progress — all **offline, no cloud required**!  
 
 Built using **Electron.js** and **SQLite**, Le-Git makes learning organized, seamless, and fun.  
