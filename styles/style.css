@@ -23,7 +23,9 @@ h1 {
   margin-bottom: 20px;
   color: #222;
 }
-
+h2{
+    text-align: center;
+}
 /* Forms & buttons */
 form, #quick-mark, #capture-video, #dark-mode-toggle {
   display: flex;
