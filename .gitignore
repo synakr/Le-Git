@@ -31,3 +31,6 @@ Thumbs.db
 *.log
 *.tmp
 *.swp
+
+# My API Key
+.env

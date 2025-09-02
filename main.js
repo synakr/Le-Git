@@ -95,7 +95,7 @@ ipcMain.on('create-node', (event, data) => {
 
 // === Playlist fetch ===
 async function fetchPlaylistVideos(playlistId, nodeId, cb) {
-  const API_KEY = "AIzaSyDiUPDi9hqCsyC7-985gBHNGXxD7_cggDI"; // replace
+  const API_KEY = "API_KEY"; // replace
   let pageToken = "", videos = [];
 
   try {
