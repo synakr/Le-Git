@@ -1,7 +1,10 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { db}= require('./src/db');
-const axios = require('axios'); // NEW
+const axios = require('axios');
+
+require('dotenv').config();
+const apiKey = process.env.API_KEY;
 
 function createWindow () {
   const win = new BrowserWindow({
@@ -95,7 +98,7 @@ ipcMain.on('create-node', (event, data) => {
 
 // === Playlist fetch ===
 async function fetchPlaylistVideos(playlistId, nodeId, cb) {
-  const API_KEY = "API_KEY"; // replace
+  const API_KEY = apiKey;
   let pageToken = "", videos = [];
 
   try {
