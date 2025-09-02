@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
-const db = require('./src/db');
+const { db}= require('./src/db');
+const axios = require('axios'); // NEW
 
 function createWindow () {
   const win = new BrowserWindow({
@@ -10,28 +11,38 @@ function createWindow () {
   });
 
   win.loadFile('index.html');
-
-  // When UI loads, send nodes ordered by order_index
-  win.webContents.once('did-finish-load', () => {
-    sendAllNodes(win);
-  });
+  win.webContents.once('did-finish-load', () => sendAllNodes(win));
 }
 
 function sendAllNodes(winOrSender) {
-  const sendFn = (rows) => {
-    // ensure progress values are integers
-    const nodes = rows.map(r => ({ ...r, progress: r.progress || 0 }));
-    // if winOrSender is an event.sender, it has send; if BrowserWindow use webContents.send
-    if (winOrSender && typeof winOrSender.webContents !== 'undefined') {
-      winOrSender.webContents.send('load-nodes', nodes);
-    } else if (winOrSender && typeof winOrSender.send === 'function') {
-      winOrSender.send('load-nodes', nodes);
-    }
-  };
-
   db.all(`SELECT * FROM nodes ORDER BY order_index ASC`, [], (err, rows) => {
     if (err) return console.error(err.message);
-    sendFn(rows);
+    const nodes = rows.map(r => ({ ...r, progress: r.progress || 0 }));
+    if (winOrSender.webContents) winOrSender.webContents.send('load-nodes', nodes);
+    else winOrSender.send('load-nodes', nodes);
+  });
+}
+
+function extractVideoId(url) {
+  const match = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : url;
+}
+
+//newly added
+function recalcPlaylistProgress(nodeId, cb) {
+  db.get(`SELECT COUNT(*) as total FROM playlist_videos WHERE node_id = ?`, [nodeId], (err, totalRow) => {
+    if (err) return cb && cb(err);
+    const total = totalRow ? totalRow.total : 0;
+    if (total === 0) {
+      db.run(`UPDATE nodes SET progress = 0 WHERE id = ?`, [nodeId], cb);
+      return;
+    }
+    db.get(`SELECT COUNT(*) as watched FROM playlist_videos WHERE node_id = ? AND watched = 1`, [nodeId], (err2, watchedRow) => {
+      if (err2) return cb && cb(err2);
+      const watched = watchedRow ? watchedRow.watched : 0;
+      const pct = Math.round((watched / total) * 100);
+      db.run(`UPDATE nodes SET progress = ? WHERE id = ?`, [pct, nodeId], cb);
+    });
   });
 }
 
@@ -61,17 +72,68 @@ function recalcNodeProgress(nodeId, cb) {
 }
 
 // --- CREATE NODE ---
+// === Node creation ===
 ipcMain.on('create-node', (event, data) => {
   db.get(`SELECT MAX(order_index) as maxIndex FROM nodes`, [], (err, row) => {
     if (err) return console.error(err.message);
-    const nextIndex = row && row.maxIndex != null ? row.maxIndex + 1 : 0;
-    db.run(`INSERT INTO nodes (name, type, progress, last_video, last_timestamp, order_index) VALUES (?, ?, ?, ?, ?, ?)`,
-      [data.name, data.type, 0, '', '', nextIndex], function(err) {
+    const nextIndex = row?.maxIndex != null ? row.maxIndex + 1 : 0;
+
+    db.run(`INSERT INTO nodes (name, type, progress, last_video, last_timestamp, order_index) 
+            VALUES (?, ?, 0, '', '', ?)`,
+      [data.name, data.type, nextIndex], function(err) {
         if (err) return console.error(err.message);
+        const nodeId = this.lastID;
+
+        if (data.type === 'playlist' && data.playlistUrl) {
+          const match = data.playlistUrl.match(/[?&]list=([^&]+)/);
+          if (match) return fetchPlaylistVideos(match[1], nodeId, () => sendAllNodes(event.sender));
+        }
         sendAllNodes(event.sender);
       });
   });
 });
+
+// === Playlist fetch ===
+async function fetchPlaylistVideos(playlistId, nodeId, cb) {
+  const API_KEY = "AIzaSyDiUPDi9hqCsyC7-985gBHNGXxD7_cggDI"; // replace
+  let pageToken = "", videos = [];
+
+  try {
+    do {
+      const res = await axios.get("https://www.googleapis.com/youtube/v3/playlistItems", {
+        params: { part: "snippet", maxResults: 50, playlistId, key: API_KEY, pageToken }
+      });
+      res.data.items.forEach(it => {
+        if (it.snippet?.resourceId.kind === "youtube#video") {
+          videos.push({ videoId: it.snippet.resourceId.videoId, title: it.snippet.title });
+        }
+      });
+      pageToken = res.data.nextPageToken;
+    } while (pageToken);
+
+    db.run(`DELETE FROM playlist_videos WHERE node_id = ?`, [nodeId], () => {
+      const stmt = db.prepare(`INSERT INTO playlist_videos (node_id, video_id, title) VALUES (?, ?, ?)`);
+      videos.forEach(v => stmt.run([nodeId, v.videoId, v.title]));
+      stmt.finalize(cb);
+    });
+  } catch (err) {
+    console.error("YouTube API error:", err.message);
+    cb && cb();
+  }
+}
+
+ipcMain.on('continue-playlist-video', (event, data) => {
+  event.sender.send('play-video', { videoId: data.videoId });
+});
+
+ipcMain.on('toggle-playlist-watched', (event, data) => {
+  db.run(`UPDATE playlist_videos SET watched = ? WHERE id = ?`, [data.watched, data.videoId], err => {
+    if (err) return console.error(err.message);
+    sendAllNodes(event.sender);
+  });
+});
+
+
 
 // --- UPDATE PROGRESS (non-custom nodes) ---
 ipcMain.on('update-progress', (event, data) => {
@@ -188,13 +250,9 @@ ipcMain.handle('get-videos', (event, nodeId) => {
 
 // --- CONTINUE A SINGLE VIDEO ---
 ipcMain.on('continue-video', (event, data) => {
-  const parts = (data.ts || '00:00').split(':');
-  let seconds = 0;
-  if (parts.length === 2) seconds = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-  else seconds = parseInt(parts[0]);
-  const urlWithTime = `${data.url}?t=${seconds}s`;
-  shell.openExternal(urlWithTime);
+  event.sender.send('play-video', { videoId: extractVideoId(data.url) });
 });
+
 
 // --- TOGGLE VIDEO WATCHED ---
 ipcMain.on('toggle-video-watched', (event, data) => {
@@ -229,7 +287,71 @@ ipcMain.on('mark-all-videos', (event, data) => {
   });
 });
 
+//api helper
+// --- NEW: Fetch playlist videos using YouTube API ---
+// async function fetchPlaylistVideos(playlistId, nodeId, cb) {
+//   const API_KEY = "AIzaSyDiUPDi9hqCsyC7-985gBHNGXxD7_cggDI"; // replace with your key
+//   let pageToken = "";
+//   let videos = [];
 
+//   try {
+//     do {
+//       const res = await axios.get("https://www.googleapis.com/youtube/v3/playlistItems", {
+//         params: {
+//           part: "snippet",
+//           maxResults: 50,
+//           playlistId,
+//           key: API_KEY,
+//           pageToken
+//         }
+//       });
+
+//       const items = res.data.items;
+//       items.forEach(it => {
+//         if (it.snippet && it.snippet.resourceId.kind === "youtube#video") {
+//           videos.push({
+//             videoId: it.snippet.resourceId.videoId,
+//             title: it.snippet.title
+//           });
+//         }
+//       });
+
+//       pageToken = res.data.nextPageToken;
+//     } while (pageToken);
+
+//     // Insert into DB
+//     const stmt = db.prepare(`INSERT INTO playlist_videos (node_id, video_id, title) VALUES (?, ?, ?)`);
+//     videos.forEach(v => stmt.run([nodeId, v.videoId, v.title]));
+//     stmt.finalize();
+
+//     cb && cb();
+//   } catch (err) {
+//     console.error("YouTube API error:", err.message);
+//     cb && cb();
+//   }
+// }
+
+// --- Get playlist videos ---
+ipcMain.handle('get-playlist-videos', (event, nodeId) => {
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT * FROM playlist_videos WHERE node_id = ? ORDER BY id ASC`, [nodeId], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+});
+
+// --- Toggle watched ---
+// ipcMain.on('toggle-playlist-watched', (event, data) => {
+//   db.run(`UPDATE playlist_videos SET watched = ? WHERE id = ?`, [data.watched, data.videoId], function(err) {
+//     if (err) return console.error(err.message);
+//     // Optional: recalc progress
+//     recalcPlaylistProgress(data.nodeId, () => {
+//       sendAllNodes(event.sender);
+//     });
+//   });
+// });
 
 app.whenReady().then(createWindow);
-
+app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
