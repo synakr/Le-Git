@@ -139,12 +139,55 @@
               <button class="delete-btn" data-id="${node.id}">Delete</button>
               <button class="up-btn" data-id="${node.id}">↑</button>
               <button class="down-btn" data-id="${node.id}">↓</button>
+
+              <button class="notes-btn" data-id="${node.id}">Notes</button>
+              <div class="notes-box" style="display:none;">
+                <textarea class="node-notes" data-id="${node.id}" placeholder="Add notes...">${node.notes || ''}</textarea>
+              </div>
+
               <button class="toggle-content-btn" data-id="${node.id}">▼</button>
             </div>
-            <textarea class="node-notes" data-id="${node.id}" placeholder="Add notes...">${node.notes || ''}</textarea>
+            
             <div class="node-content" style="display:none;"></div>
           `;
           div.innerHTML = headerHtml;
+
+          const notesBtn = div.querySelector('.notes-btn');
+          const notesPopup = div.querySelector('.notes-box');
+          const notesArea = div.querySelector('.node-notes');
+
+          // Toggle popup
+          notesBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (notesPopup.style.display === 'none') {
+            const rect = notesBtn.getBoundingClientRect();
+            notesPopup.style.display = 'block';
+            notesPopup.style.position = 'absolute';
+            notesPopup.style.top = rect.bottom + window.scrollY + 'px';
+            notesPopup.style.left = rect.left + window.scrollX + 'px';
+          } else {
+            notesPopup.style.display = 'none';
+          }
+        });
+
+
+          // Save on blur
+          if (notesArea) {
+            notesArea.addEventListener('blur', e => {
+              ipcRenderer.send('save-notes', { id: node.id, notes: e.target.value });
+              notesPopup.style.display = 'none'; // auto close after saving
+            });
+          }
+
+          // Optional: click outside closes popup
+          document.addEventListener('click', (event) => {
+            if (!notesPopup.contains(event.target) && event.target !== notesBtn) {
+              notesPopup.style.display = 'none';
+            }
+          });
+
+
+
           container.appendChild(div);
 
           const contentDiv = div.querySelector('.node-content');

@@ -355,3 +355,35 @@ body.dark-mode details summary {
 details[open] .node-content {
   margin-top: 8px;
 }
+.notes-box {
+  margin-top: 6px;
+}
+.node-notes {
+  width: 100%;
+  min-height: 40px;
+  resize: vertical;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 13px;
+}
+
+
+.notes-popup {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 6px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  z-index: 1000;
+  width: 220px;
+}
+
+.node-notes {
+  width: 100%;
+  min-height: 60px;
+  resize: vertical;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 13px;
+}
