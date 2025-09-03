@@ -36,9 +36,9 @@
         <input type="text" id="capture-ts" placeholder="Timestamp mm:ss">
         <button id="capture-save-btn">Save</button>
       </div>
-
+      
       <div id="quick-mark">
-        <input type="number" id="mark-up-to" placeholder="Mark up to video #" min="1">
+        <input type="number" id="mark-up-to" placeholder="#Mark" min="1">
         <button id="mark-btn">Mark Videos</button>
       </div>
     </div>
@@ -128,29 +128,26 @@
     div.classList.add('node');
 
     // Node header with (checked/total) counter
-    const headerHtml = `
-      <div class="node-header">
-        <span class="node-title">${node.name}</span>
-        <span class="node-type">[${node.type}]</span>
-        <span class="node-progress" data-id="${node.id}">(0/0)</span>
-      </div>
-      <div class="node-controls">
-        <input type="checkbox" class="node-complete" data-id="${node.id}" ${node.progress === 100 ? 'checked' : ''}>
-        <button class="continue-btn" data-id="${node.id}">Continue</button>
-        <button class="delete-btn" data-id="${node.id}">Delete</button>
-        <button class="up-btn" data-id="${node.id}">↑</button>
-        <button class="down-btn" data-id="${node.id}">↓</button>
-
-        <button class="notes-btn" data-id="${node.id}">Notes</button>
-        <div class="notes-box draggable-notes" style="display:none;">
-          <div class="notes-drag-handle" style="cursor:move;user-select:none;padding:4px 0 2px 0;text-align:center;font-size:13px;color:#888;background:transparent;">⇕ Drag</div>
-          <textarea class="node-notes" data-id="${node.id}" placeholder="Add notes...">${node.notes || ''}</textarea>
+      const headerHtml = `
+        <div class="node-header">
+          <span class="node-title">${node.name} [${node.type.charAt(0).toUpperCase() + node.type.slice(1)}]</span>
+          <span class="node-progress" data-id="${node.id}">(0/0)</span>
         </div>
-
-        <button class="toggle-content-btn" data-id="${node.id}">▼</button>
-      </div>
-      <div class="node-content" style="display:none;"></div>
-    `;
+        <div class="node-controls-row node-controls-row-single">
+          <input type="checkbox" class="node-complete" data-id="${node.id}" ${node.progress === 100 ? 'checked' : ''} title="Mark Complete">
+          <button class="continue-btn" data-id="${node.id}" title="Continue"><span>▶</span></button>
+          <button class="up-btn" data-id="${node.id}" title="Move Up">  ⇧ </button>
+          <button class="down-btn" data-id="${node.id}" title="Move Down">  ⇩ </button>
+          <button class="notes-btn" data-id="${node.id}" title="Notes"> 📝 </button>
+          <button class="delete-btn" data-id="${node.id}" title="Delete"> 🗑 </button>
+          <div class="notes-box draggable-notes" style="display:none;">
+            <div class="notes-drag-handle" style="cursor:move;user-select:none;padding:4px 0 2px 0;text-align:center;font-size:13px;color:#000;background:transparent;">⇕ Drag</div>
+            <textarea class="node-notes" data-id="${node.id}" placeholder="Add notes...">${node.notes || ''}</textarea>
+          </div>
+          <button class="toggle-content-btn" data-id="${node.id}" title="Expand/Collapse">▼</button>
+        </div>
+        <div class="node-content" style="display:none;"></div>
+      `;
     div.innerHTML = headerHtml;
 
     const notesBtn = div.querySelector('.notes-btn');

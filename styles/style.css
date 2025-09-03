@@ -26,6 +26,121 @@ body.dark-mode {
   gap: 15px;
 }
 
+/* Improved sidebar form styling */
+#create-node-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #f6fff9;
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 4px rgba(74, 222, 128, 0.08);
+  margin-bottom: 8px;
+}
+body.dark-mode #create-node-form {
+  background: #1f1f1f;
+  box-shadow: 0 1px 4px rgba(74, 222, 128, 0.18);
+}
+#create-node-form input,
+#create-node-form select {
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #b6e7c9;
+  margin-bottom: 0;
+}
+#create-node-form button {
+  background: linear-gradient(90deg, #4ade80 60%);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 7px 0;
+  font-size: 14px;
+  margin-top: 4px;
+  box-shadow: 0 1px 4px rgba(74, 222, 128, 0.10);
+}
+#create-node-form button:hover {
+  background: #22c55e;
+}
+
+#capture-video {
+  margin-bottom: 4px;
+}
+#capture-btn {
+  background: #4ade80;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 13px;
+  padding: 6px 0;
+  width: 100%;
+  margin-bottom: 2px;
+}
+#capture-btn:hover {
+  background: #22c55e;
+}
+#capture-form {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 5px;
+  background: #f6fff9;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 1px 4px rgba(74, 222, 128, 0.08);
+}
+body.dark-mode #capture-form {
+  background: #1a2320;
+}
+#capture-form input {
+  font-size: 13px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #b6e7c9;
+}
+#capture-save-btn {
+  background: #4ade80;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 13px;
+  padding: 6px 0;
+  width: 100%;
+}
+#capture-save-btn:hover {
+  background: #22c55e;
+}
+
+#quick-mark {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  background: #f6fff9;
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 4px rgba(74, 222, 128, 0.08);
+}
+body.dark-mode #quick-mark {
+  background: #1f1f1f;
+}
+#mark-up-to {
+  width: 70px;
+  font-size: 13px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #b6e7c9;
+}
+#mark-btn {
+  background: #4ade80;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 13px;
+  padding: 6px 10px;
+  font-weight: 500;
+}
+#mark-btn:hover {
+  background: #22c55e;
+}
+
 body.dark-mode #sidebar {
   background: #20232a;
   border-right: 1px solid #333;
@@ -177,10 +292,134 @@ body.dark-mode .node {
 }
 
 /* Node controls */
-.node-controls {
+
+/* Improved node controls layout */
+
+/* Node controls single row layout */
+.node-controls-row {
   display: flex;
   gap: 8px;
+  align-items: center;
   flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.node-controls-row-single {
+  width: 100%;
+}
+
+
+/* Button icons and arrangement */
+
+.node-controls-row button {
+  min-width: 32px;
+  padding: 6px 10px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #4ade80;
+  color: #222;
+  border: none;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+.node-controls-row button:hover {
+  background: #22c55e;
+  color: #fff;
+}
+.node-controls-row .delete-btn {
+  background: #bbf7d0;
+  color: #166534;
+}
+.node-controls-row .delete-btn:hover {
+  background: #22c55e;
+  color: #fff;
+}
+.node-controls-row .notes-btn {
+  background: #86efac;
+  color: #166534;
+}
+.node-controls-row .notes-btn:hover {
+  background: #22c55e;
+  color: #fff;
+}
+.node-controls-row .continue-btn {
+  background: #bbf7d0;
+  color: #166534;
+}
+.node-controls-row .continue-btn:hover {
+  background: #22c55e;
+  color: #fff;
+}
+.node-controls-row .toggle-content-btn {
+  background: #bbf7d0;
+  color: #166534;
+}
+.node-controls-row .toggle-content-btn:hover {
+  background: #22c55e;
+  color: #fff;
+}
+.node-controls-row .up-btn, .node-controls-row .down-btn {
+  background: #86efac;
+  color: #166534;
+}
+.node-controls-row .up-btn:hover, .node-controls-row .down-btn:hover {
+  background: #22c55e;
+  color: #fff;
+}
+.node-controls-row input[type="checkbox"] {
+  accent-color: #22c55e;
+  width: 18px;
+  height: 18px;
+}
+
+body.dark-mode .node-controls-row button {
+  background: #22c55e;
+  color: #fff;
+}
+body.dark-mode .node-controls-row button:hover {
+  background: #4ade80;
+  color: #222;
+}
+body.dark-mode .node-controls-row .delete-btn {
+  background: #22c55e;
+  color: #fff;
+}
+body.dark-mode .node-controls-row .delete-btn:hover {
+  background: #4ade80;
+  color: #222;
+}
+body.dark-mode .node-controls-row .notes-btn {
+  background: #22c55e;
+  color: #166534;
+}
+body.dark-mode .node-controls-row .notes-btn:hover {
+  background: #4ade80;
+  color: #222;
+}
+body.dark-mode .node-controls-row .continue-btn {
+  background: #22c55e;
+  color: #fff;
+}
+body.dark-mode .node-controls-row .continue-btn:hover {
+  background: #4ade80;
+  color: #222;
+}
+body.dark-mode .node-controls-row .toggle-content-btn {
+  background: #22c55e;
+  color: #fff;
+}
+body.dark-mode .node-controls-row .toggle-content-btn:hover {
+  background: #4ade80;
+  color: #222;
+}
+body.dark-mode .node-controls-row .up-btn, body.dark-mode .node-controls-row .down-btn {
+  background: #86efac;
+  color: #166534;
+}
+body.dark-mode .node-controls-row .up-btn:hover, body.dark-mode .node-controls-row .down-btn:hover {
+  background: #4ade80;
+  color: #222;
 }
 
 .node textarea {
