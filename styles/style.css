@@ -117,8 +117,38 @@ button:hover {
 #nodes-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4ade80 #e0e7ef;
+}
+
+#nodes-container::-webkit-scrollbar {
+  width: 10px;
+  background: #e0e7ef;
+  border-radius: 8px;
+}
+#nodes-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #4ade80 0%, #38bdf8 100%);
+  border-radius: 8px;
+  min-height: 40px;
+  box-shadow: 0 2px 8px rgba(60,80,120,0.10);
+}
+#nodes-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #22c55e 0%, #0ea5e9 100%);
+}
+#nodes-container::-webkit-scrollbar-track {
+  background: #e0e7ef;
+  border-radius: 8px;
+}
+body.dark-mode #nodes-container::-webkit-scrollbar {
+  background: #23272f;
+}
+body.dark-mode #nodes-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #4ade80 0%, #38bdf8 100%);
+}
+body.dark-mode #nodes-container::-webkit-scrollbar-track {
+  background: #23272f;
 }
 
 /* Node card */
@@ -266,7 +296,8 @@ body, #sidebar, .node, input, textarea, select, button {
   height: 50px;
   border: none;
   border-radius: 50%;
-  background: rgb(171, 231, 255);
+  background: #fff;
+  /* background: rgb(171, 231, 255); */
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -335,7 +366,8 @@ body.dark-mode .moon {
 }
 
 .theme-toggle:hover {
-  background: rgb(171, 231, 255); /* prevent any hover color change */
+  /* background: rgb(171, 231, 255);  */
+  background: #fff;
 }
 
 .theme-toggle:focus {
@@ -386,4 +418,19 @@ details[open] .node-content {
   border-radius: 6px;
   padding: 6px;
   font-size: 13px;
+}
+.notes-box {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px;
+  z-index: 1000;
+  width: 220px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.node-notes {
+  width: 100%;
+  min-height: 60px;
+  resize: vertical;
 }

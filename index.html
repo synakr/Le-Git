@@ -141,7 +141,8 @@
         <button class="down-btn" data-id="${node.id}">↓</button>
 
         <button class="notes-btn" data-id="${node.id}">Notes</button>
-        <div class="notes-box" style="display:none;">
+        <div class="notes-box draggable-notes" style="display:none;">
+          <div class="notes-drag-handle" style="cursor:move;user-select:none;padding:4px 0 2px 0;text-align:center;font-size:13px;color:#888;background:transparent;">⇕ Drag</div>
           <textarea class="node-notes" data-id="${node.id}" placeholder="Add notes...">${node.notes || ''}</textarea>
         </div>
 
@@ -162,12 +163,41 @@
         const rect = notesBtn.getBoundingClientRect();
         notesPopup.style.display = 'block';
         notesPopup.style.position = 'absolute';
-        notesPopup.style.top = rect.bottom + window.scrollY + 'px';
+        notesPopup.style.top = rect.bottom + window.scrollY + 8 + 'px';
         notesPopup.style.left = rect.left + window.scrollX + 'px';
+        notesPopup.style.zIndex = 9999;
+        notesPopup.style.minWidth = '240px';
+        notesPopup.style.boxShadow = '0 8px 32px rgba(60,80,120,0.18)';
+        notesPopup.style.borderRadius = '12px';
       } else {
         notesPopup.style.display = 'none';
       }
     });
+
+    // Make notes-box draggable
+    const dragHandle = notesPopup.querySelector('.notes-drag-handle');
+    let dragOffsetX = 0, dragOffsetY = 0, dragging = false;
+    dragHandle.addEventListener('mousedown', function(e) {
+      dragging = true;
+      const rect = notesPopup.getBoundingClientRect();
+      dragOffsetX = e.clientX - rect.left;
+      dragOffsetY = e.clientY - rect.top;
+      notesPopup.style.transition = 'none';
+      document.addEventListener('mousemove', dragMove);
+      document.addEventListener('mouseup', dragEnd);
+      e.preventDefault();
+    });
+    function dragMove(e) {
+      if (!dragging) return;
+      notesPopup.style.left = (e.clientX - dragOffsetX) + 'px';
+      notesPopup.style.top = (e.clientY - dragOffsetY) + 'px';
+    }
+    function dragEnd() {
+      dragging = false;
+      notesPopup.style.transition = '';
+      document.removeEventListener('mousemove', dragMove);
+      document.removeEventListener('mouseup', dragEnd);
+    }
 
     // Save notes on blur
     if (notesArea) {
@@ -262,13 +292,14 @@
           `;
           videoList.appendChild(li);
 
-          // checkbox updates progress
+          // checkbox updates progress in realtime, no refresh
           li.querySelector('.video-watched').addEventListener('change', ev => {
             ipcRenderer.send('toggle-video-watched', {
               videoId: ev.target.dataset.id,
               watched: ev.target.checked ? 1 : 0,
               nodeId: node.id
             });
+            // Only update progress counter and checkbox state
             updateNodeProgress();
           });
 
@@ -305,12 +336,14 @@
           `;
           ul.appendChild(li);
 
+          // checkbox updates progress in realtime, no refresh
           li.querySelector('.video-watched').addEventListener('change', ev => {
             ipcRenderer.send('toggle-playlist-watched', {
               videoId: ev.target.dataset.id,
               nodeId: node.id,
               watched: ev.target.checked ? 1 : 0
             });
+            // Only update progress counter and checkbox state
             updateNodeProgress();
           });
 
