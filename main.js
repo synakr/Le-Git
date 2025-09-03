@@ -132,7 +132,7 @@ ipcMain.on('continue-playlist-video', (event, data) => {
 ipcMain.on('toggle-playlist-watched', (event, data) => {
   db.run(`UPDATE playlist_videos SET watched = ? WHERE id = ?`, [data.watched, data.videoId], err => {
     if (err) return console.error(err.message);
-    sendAllNodes(event.sender);
+    // No UI reload here; frontend updates progress in real-time
   });
 });
 
@@ -261,9 +261,9 @@ ipcMain.on('continue-video', (event, data) => {
 ipcMain.on('toggle-video-watched', (event, data) => {
   db.run(`UPDATE custom_videos SET watched = ? WHERE id = ?`, [data.watched, data.videoId], function(err) {
     if (err) return console.error(err.message);
-    // recalc node progress
+    // recalc node progress, but do NOT reload UI
     recalcNodeProgress(data.nodeId, () => {
-      sendAllNodes(event.sender);
+      // No sendAllNodes here; frontend updates progress in real-time
     });
   });
 });
