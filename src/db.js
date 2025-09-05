@@ -3,6 +3,12 @@ const db = new sqlite3.Database('legit.db');
 
 // Initialize tables
 db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS streak (
+    date TEXT,
+    node_id INTEGER,
+    count INTEGER,
+    PRIMARY KEY (date, node_id)
+  )`);
   db.run(`CREATE TABLE IF NOT EXISTS nodes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT,
@@ -41,6 +47,35 @@ db.serialize(() => {
 
 // --- Helper functions ---
 
+// Streak helpers
+function addStreak(date, nodeId, delta) {
+  db.get(`SELECT count FROM streak WHERE date = ? AND node_id = ?`, [date, nodeId], (err, row) => {
+    if (row) {
+      db.run(`UPDATE streak SET count = count + ? WHERE date = ? AND node_id = ?`, [delta, date, nodeId]);
+    } else {
+      db.run(`INSERT INTO streak (date, node_id, count) VALUES (?, ?, ?)`, [date, nodeId, Math.max(0, delta)]);
+    }
+  });
+  // Also update general streak (nodeId = 0)
+  if (nodeId !== 0) {
+    db.get(`SELECT count FROM streak WHERE date = ? AND node_id = 0`, [date], (err, row) => {
+      if (row) {
+        db.run(`UPDATE streak SET count = count + ? WHERE date = ? AND node_id = 0`, [delta, date]);
+      } else {
+        db.run(`INSERT INTO streak (date, node_id, count) VALUES (?, 0, ?)`, [date, Math.max(0, delta)]);
+      }
+    });
+  }
+}
+
+function getStreaks(nodeId, days, cb) {
+  // nodeId: 0 for general, else specific node
+  db.all(`SELECT date, count FROM streak WHERE node_id = ? ORDER BY date DESC LIMIT ?`, [nodeId, days], (err, rows) => {
+    if (err) return cb([]);
+    cb(rows);
+  });
+}
+
 function insertPlaylistVideos(nodeId, videos, cb) {
   db.serialize(() => {
     db.run(`DELETE FROM playlist_videos WHERE node_id = ?`, [nodeId], (err) => {
@@ -76,5 +111,7 @@ module.exports = {
   db,
   insertPlaylistVideos,
   addNode,
-  getNodes
+  getNodes,
+  addStreak,
+  getStreaks
 };

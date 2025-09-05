@@ -1,3 +1,23 @@
+/* Streak Graph Styles */
+#streak-graph {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+.streak-square {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #222;
+  transition: background 0.3s;
+  box-shadow: 0 1px 4px rgba(60,80,120,0.08);
+}
+.streak-green-0 { background: #222; }
+.streak-green-1 { background: #14532d; }
+.streak-green-2 { background: #22c55e; }
+.streak-green-3 { background: #4ade80; }
+.streak-green-4 { background: #86efac; }
+.streak-green-5 { background: #bbf7d0; }
 /* Global styling */
 body {
   font-family: 'Inter', 'Segoe UI', sans-serif;

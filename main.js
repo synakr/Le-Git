@@ -133,6 +133,9 @@ ipcMain.on('toggle-playlist-watched', (event, data) => {
   db.run(`UPDATE playlist_videos SET watched = ? WHERE id = ?`, [data.watched, data.videoId], err => {
     if (err) return console.error(err.message);
     // No UI reload here; frontend updates progress in real-time
+    // Streak tracking
+    const date = new Date().toISOString().slice(0, 10);
+    require('./src/db').addStreak(date, data.nodeId, data.watched ? 1 : -1);
   });
 });
 
@@ -265,6 +268,9 @@ ipcMain.on('toggle-video-watched', (event, data) => {
     recalcNodeProgress(data.nodeId, () => {
       // No sendAllNodes here; frontend updates progress in real-time
     });
+    // Streak tracking
+    const date = new Date().toISOString().slice(0, 10);
+    require('./src/db').addStreak(date, data.nodeId, data.watched ? 1 : -1);
   });
 });
 
@@ -354,6 +360,15 @@ ipcMain.handle('get-playlist-videos', (event, nodeId) => {
 //     });
 //   });
 // });
+
+// --- Streak IPC ---
+ipcMain.handle('get-streaks', (event, { nodeId, days }) => {
+  return new Promise((resolve) => {
+    require('./src/db').getStreaks(nodeId, days, (rows) => {
+      resolve(rows);
+    });
+  });
+});
 
 app.whenReady().then(createWindow);
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });

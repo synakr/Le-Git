@@ -41,6 +41,12 @@
         <input type="number" id="mark-up-to" placeholder="#Mark" min="1">
         <button id="mark-btn">Mark Videos</button>
       </div>
+      <!-- Streak Graph -->
+      <div id="streak-graph-container" style="margin:18px 0 0 0;">
+        <div style="font-size:15px;font-weight:500;margin-bottom:6px;color:#38bdf8;">Streak (Last 30 Days)</div>
+        <div id="streak-graph" style="display:flex;gap:2px;"></div>
+        <div id="streak-graph-label" style="font-size:13px;color:#555;margin-top:6px;"></div>
+      </div>
     </div>
     <!-- END sidebar -->
 
@@ -143,8 +149,9 @@
   container.innerHTML = '';
 
   nodes.forEach(node => {
-    const div = document.createElement('div');
-    div.classList.add('node');
+  const div = document.createElement('div');
+  div.classList.add('node');
+  div.setAttribute('data-id', node.id);
 
     // Node header with (checked/total) counter and progress bar
     const headerHtml = `
@@ -567,6 +574,78 @@
           infoPopover.style.display = 'none';
         }
       });
+// --- Streak Graph Logic (DB version) ---
+function getLast30Days() {
+  const days = [];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
+function getStreakColor(count) {
+  if (count === 0) return 'streak-green-0';
+  if (count === 1) return 'streak-green-1';
+  if (count === 2) return 'streak-green-2';
+  if (count <= 4) return 'streak-green-3';
+  if (count <= 7) return 'streak-green-4';
+  return 'streak-green-5';
+}
+async function renderStreakGraph(nodeId = 0) {
+  const days = getLast30Days();
+  const graph = document.getElementById('streak-graph');
+  const label = document.getElementById('streak-graph-label');
+  graph.innerHTML = '';
+  // Fetch streaks from DB
+  const streakRows = await ipcRenderer.invoke('get-streaks', { nodeId, days: 30 });
+  const streakMap = {};
+  streakRows.forEach(row => { streakMap[row.date] = row.count; });
+  days.forEach(day => {
+    const count = streakMap[day] || 0;
+    const square = document.createElement('div');
+    square.className = 'streak-square ' + getStreakColor(count);
+    square.title = `${day}: ${count} watched`;
+    graph.appendChild(square);
+  });
+  if (nodeId && window.nodeNameMap && window.nodeNameMap[nodeId]) {
+    label.innerHTML = `<span style='color:#22c55e;font-weight:600;'>${window.nodeNameMap[nodeId]}</span> streak (last 30 days)`;
+  } else {
+    label.textContent = 'Le-Git Streaks';
+  }
+}
+
+// Build nodeNameMap for quick lookup
+window.nodeNameMap = {};
+let selectedNodeId = 0;
+ipcRenderer.on('load-nodes', (event, nodes) => {
+  window.nodeNameMap = {};
+  nodes.forEach(node => {
+    window.nodeNameMap[node.id] = node.name;
+  });
+  renderStreakGraph(selectedNodeId);
+});
+
+const nodesContainer = document.getElementById('nodes-container');
+nodesContainer.addEventListener('click', function(e) {
+  let nodeDiv = e.target.closest('.node');
+  if (nodeDiv && nodeDiv.dataset && nodeDiv.dataset.id) {
+    selectedNodeId = parseInt(nodeDiv.dataset.id);
+    renderStreakGraph(selectedNodeId);
+  } else {
+    selectedNodeId = 0;
+    renderStreakGraph();
+  }
+});
+window.addEventListener('click', function(e) {
+  if (!e.target.closest('.node')) {
+    if (selectedNodeId) {
+      selectedNodeId = 0;
+      renderStreakGraph();
+    }
+  }
+});
     </script>
   </body>
 </html>
