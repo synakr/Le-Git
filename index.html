@@ -53,6 +53,25 @@
       <div id="nodes-container"></div>
     </div>
 
+    <!-- Info Icon -->
+    <div id="info-icon" style="position:fixed;top:18px;right:24px;z-index:9999;cursor:pointer;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background:#555 ;border-radius:50%;box-shadow:0 2px 8px rgba(60,80,120,0.10);padding:4px;">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="16" x2="12" y2="12"/>
+        <line x1="12" y1="8" x2="12" y2="8"/>
+      </svg>
+    </div>
+    <div id="info-popover" style="display:none;position:fixed;top:54px;right:32px;z-index:10000;background:#fff;color:#222;border-radius:12px;box-shadow:0 8px 32px rgba(60,80,120,0.18);padding:22px 28px;min-width:320px;max-width:380px;font-size:15px;line-height:1.6;">
+      <div style="font-size:18px;font-weight:600;margin-bottom:8px;color:#38bdf8;">Le-Git App Info</div>
+      <div><b>Version:</b> 1.0.0</div>
+      <div><b>Creator:</b> <a href="https://github.com/synakr" target="_blank" style="color:#4ade80;text-decoration:none;">synakr</a>, <a href="https://github.com/Haunter05" target="_blank" style="color:#4ade80;text-decoration:none;">Haunter05</a></div>
+      <div><b>License:</b> <a href="https://opensource.org/licenses/MIT" target="_blank" style="color:#4ade80;text-decoration:none;">MIT</a></div>
+      <div><b>Source:</b> <a href="https://github.com/your-username/le-git" target="_blank" style="color:#4ade80;text-decoration:none;">GitHub Repo</a></div>
+      <div><b>Tech Stack:</b> Electron.js, SQLite, HTML/CSS/JS</div>
+      <div style="margin-top:10px;font-size:13px;color:#555;">Made for NIT students and beyond. <br>Track your lectures, playlists, and custom groups <b>offline</b>.<br>Contact: <a href="mailto:your@email.com" style="color:#38bdf8;text-decoration:none;">hrjbgm@email.com</a></div>
+      <button id="close-info-popover" style="margin-top:14px;background:#38bdf8;color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:15px;cursor:pointer;">Close</button>
+    </div>
+
 
 
 
@@ -127,12 +146,15 @@
     const div = document.createElement('div');
     div.classList.add('node');
 
-    // Node header with (checked/total) counter
-      const headerHtml = `
-        <div class="node-header">
-          <span class="node-title">${node.name} [${node.type.charAt(0).toUpperCase() + node.type.slice(1)}]</span>
-          <span class="node-progress" data-id="${node.id}">(0/0)</span>
-        </div>
+    // Node header with (checked/total) counter and progress bar
+    const headerHtml = `
+      <div class="node-header">
+        <span class="node-title">${node.name} [${node.type.charAt(0).toUpperCase() + node.type.slice(1)}]</span>
+        <span class="node-progress" data-id="${node.id}">(0/0)</span>
+      </div>
+      <div class="node-progressbar" style="width:100%;height:10px;background:#e0e7ef;border-radius:6px;overflow:hidden;margin-bottom:6px;">
+        <div class="node-progressbar-fill" style="height:100%;width:${node.progress || 0}%;background:linear-gradient(90deg,#4ade80 60%,#38bdf8 100%);transition:width 0.3s;"></div>
+      </div>
         <div class="node-controls-row node-controls-row-single">
           <input type="checkbox" class="node-complete" data-id="${node.id}" ${node.progress === 100 ? 'checked' : ''} title="Mark Complete">
           <button class="continue-btn" data-id="${node.id}" title="Continue"><span>▶</span></button>
@@ -230,6 +252,7 @@
     // Helper: update progress counter
     function updateNodeProgress() {
       const nodeProgress = div.querySelector('.node-progress');
+      const progressBarFill = div.querySelector('.node-progressbar-fill');
       const checkboxes = contentDiv.querySelectorAll('.video-watched');
       const checked = contentDiv.querySelectorAll('.video-watched:checked').length;
       nodeProgress.textContent = `(${checked}/${checkboxes.length})`;
@@ -238,6 +261,11 @@
       const completeCheckbox = div.querySelector('.node-complete');
       if (checkboxes.length > 0) {
         completeCheckbox.checked = (checked === checkboxes.length);
+        // update progress bar width
+        const pct = Math.round((checked / checkboxes.length) * 100);
+        progressBarFill.style.width = pct + '%';
+      } else {
+        progressBarFill.style.width = '0%';
       }
     }
 
@@ -250,6 +278,10 @@
             <input class="add-video-ts" type="text" placeholder="Timestamp mm:ss">
             <button class="add-video-btn" data-id="${node.id}">Add</button>
             <button class="mark-all-btn" data-id="${node.id}">Mark All Watched</button>
+          </div>
+          <div class="mark-upto-row" style="margin:6px 0;display:flex;gap:6px;align-items:center;">
+            <input type="number" class="mark-upto-input" min="1" placeholder="Up to #">
+            <button class="mark-upto-btn" data-id="${node.id}">Mark Up To</button>
           </div>
           <ul class="video-list"></ul>
         </div>
@@ -313,12 +345,41 @@
         });
 
         updateNodeProgress(); // init
+
+        // Mark Up To logic for custom group
+        const markUptoBtn = customArea.querySelector('.mark-upto-btn');
+        const markUptoInput = customArea.querySelector('.mark-upto-input');
+        markUptoBtn.addEventListener('click', () => {
+          const upto = parseInt(markUptoInput.value);
+          if (upto > 0 && upto <= videos.length) {
+            // Mark all videos up to the given index as watched
+            videos.forEach((v, idx) => {
+              const watched = idx < upto ? 1 : 0;
+              ipcRenderer.send('toggle-video-watched', {
+                videoId: v.id,
+                watched,
+                nodeId: node.id
+              });
+            });
+            // Update checkboxes visually
+            const boxes = videoList.querySelectorAll('.video-watched');
+            boxes.forEach((cb, idx) => { cb.checked = idx < upto; });
+            updateNodeProgress();
+          }
+        });
       }).catch(console.error);
     }
 
     // Playlist node content
     if (node.type === 'playlist') {
-      contentDiv.innerHTML = `<div class="playlist-area" data-id="${node.id}"><ul class="playlist-videos"></ul></div>`;
+      contentDiv.innerHTML = `
+        <div class="playlist-area" data-id="${node.id}">
+          <div class="mark-upto-row" style="margin:6px 0;display:flex;gap:6px;align-items:center;">
+            <input type="number" class="mark-upto-input" min="1" placeholder="Up to #">
+            <button class="mark-upto-btn" data-id="${node.id}">Mark Up To</button>
+          </div>
+          <ul class="playlist-videos"></ul>
+        </div>`;
       const playlistArea = contentDiv.querySelector('.playlist-area');
       const ul = playlistArea.querySelector('.playlist-videos');
 
@@ -351,6 +412,27 @@
         });
 
         updateNodeProgress(); // init
+
+        // Mark Up To logic for playlist
+        const markUptoBtn = playlistArea.querySelector('.mark-upto-btn');
+        const markUptoInput = playlistArea.querySelector('.mark-upto-input');
+        markUptoBtn.addEventListener('click', () => {
+          const upto = parseInt(markUptoInput.value);
+          if (upto > 0 && upto <= videos.length) {
+            videos.forEach((v, idx) => {
+              const watched = idx < upto ? 1 : 0;
+              ipcRenderer.send('toggle-playlist-watched', {
+                videoId: v.id,
+                nodeId: node.id,
+                watched
+              });
+            });
+            // Update checkboxes visually
+            const boxes = ul.querySelectorAll('.video-watched');
+            boxes.forEach((cb, idx) => { cb.checked = idx < upto; });
+            updateNodeProgress();
+          }
+        });
       });
     }
 
@@ -470,6 +552,21 @@
       });
 
 
+      // Info icon popover logic
+      const infoIcon = document.getElementById('info-icon');
+      const infoPopover = document.getElementById('info-popover');
+      const closeInfoBtn = document.getElementById('close-info-popover');
+      infoIcon.addEventListener('click', () => {
+        infoPopover.style.display = 'block';
+      });
+      closeInfoBtn.addEventListener('click', () => {
+        infoPopover.style.display = 'none';
+      });
+      document.addEventListener('click', (e) => {
+        if (!infoPopover.contains(e.target) && e.target !== infoIcon && !infoIcon.contains(e.target)) {
+          infoPopover.style.display = 'none';
+        }
+      });
     </script>
   </body>
 </html>
