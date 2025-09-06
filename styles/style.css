@@ -12,7 +12,8 @@
   transition: background 0.3s;
   box-shadow: 0 1px 4px rgba(60,80,120,0.08);
 }
-.streak-green-0 { background: #222; }
+.streak-green-0 { background: #f0f2f5; }
+.dark-mode .streak-green-0 { background: #222; }
 .streak-green-1 { background: #14532d; }
 .streak-green-2 { background: #22c55e; }
 .streak-green-3 { background: #4ade80; }

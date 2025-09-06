@@ -61,7 +61,7 @@
 
     <!-- Info Icon -->
     <div id="info-icon" style="position:fixed;top:18px;right:24px;z-index:9999;cursor:pointer;">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background:#555 ;border-radius:50%;box-shadow:0 2px 8px rgba(60,80,120,0.10);padding:4px;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background:#fff ;border-radius:50%;box-shadow:0 2px 8px rgba(60,80,120,0.10);padding:4px;">
         <circle cx="12" cy="12" r="10"/>
         <line x1="12" y1="16" x2="12" y2="12"/>
         <line x1="12" y1="8" x2="12" y2="8"/>
@@ -487,7 +487,7 @@
           <div class="video-wrapper">
             <button class="close-video">×</button>
             <iframe width="640" height="360"
-              src="https://www.youtube.com/embed/${data.videoId}?autoplay=1"
+              src="https://www.youtube.com/embed/${data.videoId}?autoplay=1&rel=0"
               frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
           </div>
         `;
@@ -538,7 +538,7 @@
             <div id="drag-handle">⇕</div>
             <button class="close-video">×</button>
             <iframe width="100%" height="100%"
-            src="https://www.youtube.com/embed/${data.videoId}?autoplay=1"
+            src="https://www.youtube.com/embed/${data.videoId}?autoplay=1&rel=0"
             frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
           </div>
         `;
