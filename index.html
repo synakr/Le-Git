@@ -37,10 +37,6 @@
         <button id="capture-save-btn">Save</button>
       </div>
       
-      <div id="quick-mark">
-        <input type="number" id="mark-up-to" placeholder="#Mark" min="1">
-        <button id="mark-btn">Mark Videos</button>
-      </div>
       <!-- Streak Graph -->
       <div id="streak-graph-container" style="margin:18px 0 0 0;">
         <div style="font-size:15px;font-weight:500;margin-bottom:6px;color:#38bdf8;">Streak (Last 30 Days)</div>
@@ -121,11 +117,6 @@
         form.reset();
       });
 
-      // Quick mark
-      document.getElementById('mark-btn').addEventListener('click', () => {
-        const upTo = parseInt(document.getElementById('mark-up-to').value);
-        if (upTo > 0) ipcRenderer.send('mark-up-to', { upTo });
-      });
 
       // Capture video UI
       const captureForm = document.getElementById('capture-form');
