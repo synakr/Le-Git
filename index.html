@@ -123,7 +123,7 @@
   div.classList.add('node');
   div.setAttribute('data-id', node.id);
 
-    // Node header with (checked/total) counter and progress bar
+    // Node header with (checked/total) counter and progress bar (removed node-complete checkbox)
     const headerHtml = `
       <div class="node-header">
         <span class="node-title">${node.name} [${node.type.charAt(0).toUpperCase() + node.type.slice(1)}]</span>
@@ -133,7 +133,6 @@
         <div class="node-progressbar-fill" style="height:100%;width:${node.progress || 0}%;background:linear-gradient(90deg,#4ade80 60%,#38bdf8 100%);transition:width 0.3s;"></div>
       </div>
         <div class="node-controls-row node-controls-row-single">
-          <input type="checkbox" class="node-complete" data-id="${node.id}" ${node.progress === 100 ? 'checked' : ''} title="Mark Complete">
           <button class="continue-btn" data-id="${node.id}" title="Continue"><span>▶</span></button>
           <button class="up-btn" data-id="${node.id}" title="Move Up">  ⇧ </button>
           <button class="down-btn" data-id="${node.id}" title="Move Down">  ⇩ </button>
@@ -234,11 +233,8 @@
       const checked = contentDiv.querySelectorAll('.video-watched:checked').length;
       nodeProgress.textContent = `(${checked}/${checkboxes.length})`;
 
-      // auto-check "complete" if all videos are watched
-      const completeCheckbox = div.querySelector('.node-complete');
+      // update progress bar width only
       if (checkboxes.length > 0) {
-        completeCheckbox.checked = (checked === checkboxes.length);
-        // update progress bar width
         const pct = Math.round((checked / checkboxes.length) * 100);
         progressBarFill.style.width = pct + '%';
       } else {
@@ -379,10 +375,14 @@
           const li = document.createElement('li');
           li.classList.add('playlist-video');
           if (v.watched) li.classList.add('greyed-out');
+          // Use flex to align continue button right
+          li.style.display = 'flex';
+          li.style.alignItems = 'center';
+          li.style.gap = '8px';
           li.innerHTML = `
             <input type="checkbox" class="video-watched" data-id="${v.id}" ${v.watched ? 'checked' : ''}>
-            <span>${v.title}</span>
-            <button class="continue-playlist-btn" data-vid="${v.video_id}">Continue</button>
+            <span style="flex:1;">${v.title}</span>
+            <button class="continue-playlist-btn" data-vid="${v.video_id}" style="margin-left:auto;">Continue</button>
           `;
           ul.appendChild(li);
 
@@ -440,20 +440,7 @@
     }
 
     // Node controls
-    const completeCheckbox = div.querySelector('.node-complete');
-    completeCheckbox.addEventListener('change', e => {
-      const isChecked = e.target.checked;
-      if (node.type === 'custom') {
-        ipcRenderer.send('mark-all-videos', { id: node.id, watched: isChecked ? 1 : 0 });
-      } else {
-        ipcRenderer.send('update-progress', { id: node.id, progress: isChecked ? 100 : 0 });
-      }
-
-      // also reflect visually
-      const allBoxes = contentDiv.querySelectorAll('.video-watched');
-      allBoxes.forEach(cb => { cb.checked = isChecked; });
-      updateNodeProgress();
-    });
+    // Removed node-complete checkbox logic
 
     div.querySelector('.continue-btn').addEventListener('click', () =>
       ipcRenderer.send('continue-node', { id: node.id })
