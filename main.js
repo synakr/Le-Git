@@ -162,18 +162,7 @@ ipcMain.on('mark-up-to', (event, data) => {
   });
 });
 
-// --- CAPTURE VIDEO (creates new custom node with last_video) ---
-ipcMain.on('capture-video-ui', (event, data) => {
-  db.get(`SELECT MAX(order_index) as maxIndex FROM nodes`, [], (err, row) => {
-    if (err) return console.error(err.message);
-    const nextIndex = row && row.maxIndex != null ? row.maxIndex + 1 : 0;
-    db.run(`INSERT INTO nodes (name, type, progress, last_video, last_timestamp, order_index) VALUES (?, ?, ?, ?, ?, ?)`,
-      ['Captured Video', 'custom', 0, data.url, data.ts, nextIndex], function(err){
-        if (err) return console.error(err.message);
-        sendAllNodes(event.sender);
-      });
-  });
-});
+
 
 // --- CONTINUE NODE (open last_video at timestamp) ---
 ipcMain.on('continue-node', (event, data) => {

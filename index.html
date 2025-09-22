@@ -28,14 +28,7 @@
         <button type="submit">Create Node</button>
       </form>
 
-      <div id="capture-video">
-        <button id="capture-btn">Capture Current Video</button>
-      </div>
-      <div id="capture-form" style="display:none; gap:5px; margin-top:5px;">
-        <input type="text" id="capture-url" placeholder="YouTube URL">
-        <input type="text" id="capture-ts" placeholder="Timestamp mm:ss">
-        <button id="capture-save-btn">Save</button>
-      </div>
+
       
       <!-- Streak Graph -->
       <div id="streak-graph-container" style="margin:18px 0 0 0;">
@@ -118,21 +111,7 @@
       });
 
 
-      // Capture video UI
-      const captureForm = document.getElementById('capture-form');
-      const captureUrl = document.getElementById('capture-url');
-      const captureTs = document.getElementById('capture-ts');
-      document.getElementById('capture-btn').addEventListener('click', () => {
-        captureForm.style.display = captureForm.style.display === 'none' ? 'flex' : 'none';
-      });
-      document.getElementById('capture-save-btn').addEventListener('click', () => {
-        const url = captureUrl.value.trim();
-        const ts = captureTs.value.trim() || '00:00';
-        if (url) ipcRenderer.send('capture-video-ui', { url, ts });
-        captureUrl.value = '';
-        captureTs.value = '';
-        captureForm.style.display = 'none';
-      });
+
 
       // Render nodes
       ipcRenderer.on('load-nodes', (event, nodes) => {
@@ -311,6 +290,7 @@
         videos.forEach(v => {
           const li = document.createElement('li');
           li.classList.add('video-item');
+          if (v.watched) li.classList.add('greyed-out');
           li.innerHTML = `
             <input type="checkbox" class="video-watched" data-id="${v.id}" ${v.watched ? 'checked' : ''}>
             <span class="video-url">${v.url}</span>
@@ -320,16 +300,21 @@
           `;
           videoList.appendChild(li);
 
-          // checkbox updates progress in realtime, no refresh
-            li.querySelector('.video-watched').addEventListener('change', ev => {
-              ipcRenderer.send('toggle-video-watched', {
-                videoId: ev.target.dataset.id,
-                watched: ev.target.checked ? 1 : 0,
-                nodeId: node.id
-              });
-              // Only update progress counter and checkbox state, do NOT re-render or collapse
-              updateNodeProgress();
+          // Greyout logic for custom videos
+          const checkbox = li.querySelector('.video-watched');
+          checkbox.addEventListener('change', ev => {
+            ipcRenderer.send('toggle-video-watched', {
+              videoId: ev.target.dataset.id,
+              watched: ev.target.checked ? 1 : 0,
+              nodeId: node.id
             });
+            if (ev.target.checked) {
+              li.classList.add('greyed-out');
+            } else {
+              li.classList.remove('greyed-out');
+            }
+            updateNodeProgress();
+          });
 
           li.querySelector('.continue-video-btn').addEventListener('click', ev =>
             ipcRenderer.send('continue-video', { url: ev.target.dataset.url, ts: ev.target.dataset.ts })
@@ -359,9 +344,16 @@
                 nodeId: node.id
               });
             });
-            // Update checkboxes visually
+            // Update checkboxes and greyout visually
             const boxes = videoList.querySelectorAll('.video-watched');
-            boxes.forEach((cb, idx) => { cb.checked = idx < upto; });
+            boxes.forEach((cb, idx) => {
+              cb.checked = idx < upto;
+              if (cb.checked) {
+                cb.closest('li').classList.add('greyed-out');
+              } else {
+                cb.closest('li').classList.remove('greyed-out');
+              }
+            });
             updateNodeProgress();
           }
         });
@@ -386,6 +378,7 @@
         videos.forEach(v => {
           const li = document.createElement('li');
           li.classList.add('playlist-video');
+          if (v.watched) li.classList.add('greyed-out');
           li.innerHTML = `
             <input type="checkbox" class="video-watched" data-id="${v.id}" ${v.watched ? 'checked' : ''}>
             <span>${v.title}</span>
@@ -393,16 +386,21 @@
           `;
           ul.appendChild(li);
 
-          // checkbox updates progress in realtime, no refresh
-            li.querySelector('.video-watched').addEventListener('change', ev => {
-              ipcRenderer.send('toggle-playlist-watched', {
-                videoId: ev.target.dataset.id,
-                nodeId: node.id,
-                watched: ev.target.checked ? 1 : 0
-              });
-              // Only update progress counter and checkbox state, do NOT re-render or collapse
-              updateNodeProgress();
+          // Greyout logic for playlist videos
+          const checkbox = li.querySelector('.video-watched');
+          checkbox.addEventListener('change', ev => {
+            ipcRenderer.send('toggle-playlist-watched', {
+              videoId: ev.target.dataset.id,
+              nodeId: node.id,
+              watched: ev.target.checked ? 1 : 0
             });
+            if (ev.target.checked) {
+              li.classList.add('greyed-out');
+            } else {
+              li.classList.remove('greyed-out');
+            }
+            updateNodeProgress();
+          });
 
           li.querySelector('.continue-playlist-btn').addEventListener('click', ev =>
             ipcRenderer.send('continue-playlist-video', { videoId: ev.target.dataset.vid })
@@ -425,9 +423,16 @@
                 watched
               });
             });
-            // Update checkboxes visually
+            // Update checkboxes and greyout visually
             const boxes = ul.querySelectorAll('.video-watched');
-            boxes.forEach((cb, idx) => { cb.checked = idx < upto; });
+            boxes.forEach((cb, idx) => {
+              cb.checked = idx < upto;
+              if (cb.checked) {
+                cb.closest('li').classList.add('greyed-out');
+              } else {
+                cb.closest('li').classList.remove('greyed-out');
+              }
+            });
             updateNodeProgress();
           }
         });

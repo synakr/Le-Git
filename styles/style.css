@@ -1,3 +1,7 @@
+/* Greyed out video item */
+.greyed-out {
+  opacity: 0.5;
+}
 /* Streak Graph Styles */
 #streak-graph {
   display: flex;
