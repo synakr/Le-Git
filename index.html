@@ -253,7 +253,7 @@
             <button class="mark-all-btn" data-id="${node.id}">Mark All Watched</button>
           </div>
           <div class="mark-upto-row" style="margin:6px 0;display:flex;gap:6px;align-items:center;">
-            <input type="number" class="mark-upto-input" min="1" placeholder="Up to #">
+            <input type="number" class="mark-upto-input" min="1" placeholder="Mark UpTo">
             <button class="mark-upto-btn" data-id="${node.id}">Mark Up To</button>
           </div>
           <ul class="video-list"></ul>
@@ -361,8 +361,8 @@
       contentDiv.innerHTML = `
         <div class="playlist-area" data-id="${node.id}">
           <div class="mark-upto-row" style="margin:6px 0;display:flex;gap:6px;align-items:center;">
-            <input type="number" class="mark-upto-input" min="1" placeholder="Up to #">
-            <button class="mark-upto-btn" data-id="${node.id}">Mark Up To</button>
+            <input type="number" class="mark-upto-input" min="1" placeholder="Mark UpTo">
+            <button class="mark-upto-btn" data-id="${node.id}">Mark</button>
           </div>
           <ul class="playlist-videos"></ul>
         </div>`;
@@ -382,7 +382,7 @@
           li.innerHTML = `
             <input type="checkbox" class="video-watched" data-id="${v.id}" ${v.watched ? 'checked' : ''}>
             <span style="flex:1;">${v.title}</span>
-            <button class="continue-playlist-btn" data-vid="${v.video_id}" style="margin-left:auto;">Continue</button>
+            <button class="continue-playlist-btn" data-vid="${v.video_id}" style="margin-left:auto;">Play ▶</button>
           `;
           ul.appendChild(li);
 
