@@ -708,9 +708,18 @@ const myQuotes = [
             updateNodeProgress();
           });
 
-          li.querySelector('.continue-playlist-btn').addEventListener('click', ev =>
-            ipcRenderer.send('continue-playlist-video', { videoId: ev.target.dataset.vid })
-          );
+          li.querySelector('.continue-playlist-btn').addEventListener('click', ev => {
+            ipcRenderer.send('continue-playlist-video', { videoId: ev.target.dataset.vid });
+            // Automatically check the box and grey out
+            checkbox.checked = true;
+            li.classList.add('greyed-out');
+            ipcRenderer.send('toggle-playlist-watched', {
+              videoId: checkbox.dataset.id,
+              nodeId: node.id,
+              watched: 1
+            });
+            updateNodeProgress();
+          });
         });
 
         updateNodeProgress(); // init
@@ -748,9 +757,22 @@ const myQuotes = [
     // Node controls
     // Removed node-complete checkbox logic
 
-    div.querySelector('.continue-btn').addEventListener('click', () =>
-      ipcRenderer.send('continue-node', { id: node.id })
-    );
+    div.querySelector('.continue-btn').addEventListener('click', async () => {
+      if (node.type === 'playlist') {
+        // Get playlist videos and find last watched
+        const videos = await ipcRenderer.invoke('get-playlist-videos', node.id);
+        // Find last watched video (highest id with watched=1)
+        const lastWatched = videos.filter(v => v.watched).sort((a, b) => b.id - a.id)[0];
+        if (lastWatched) {
+          ipcRenderer.send('continue-playlist-video', { videoId: lastWatched.video_id });
+        } else {
+          // fallback: open first video
+          if (videos.length) ipcRenderer.send('continue-playlist-video', { videoId: videos[0].video_id });
+        }
+      } else {
+        ipcRenderer.send('continue-node', { id: node.id });
+      }
+    });
     div.querySelector('.delete-btn').addEventListener('click', () => {
       if (confirm('Delete this node and all its videos?')) {
         ipcRenderer.send('delete-node', { id: node.id });

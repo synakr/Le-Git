@@ -402,24 +402,7 @@ body.dark-mode #capture-form {
 .ai-msg.user {
   justify-content: flex-end;
 }
-.ai-msg .bubble {
-  padding: 8px 14px;
-  border-radius: 16px;
-  max-width: 80%;
-  font-size: 15px;
-  line-height: 1.5;
-  box-shadow: 0 1px 4px rgba(60,80,120,0.08);
-}
-.ai-msg.user .bubble {
-  background: #38bdf8;
-  color: #fff;
-  border-bottom-right-radius: 4px;
-}
-.ai-msg.bot .bubble {
-  background: #f1f5f9;
-  color: #222;
-  border-bottom-left-radius: 4px;
-}
+#ai-chatbot-form input {
   padding: 5px 8px;
   border-radius: 6px;
   border: 1px solid #b6e7c9;
