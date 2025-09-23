@@ -49,11 +49,12 @@ db.serialize(() => {
 
 // Streak helpers
 function addStreak(date, nodeId, delta) {
+  if (delta <= 0) return; // Do not insert or update for non-positive delta
   db.get(`SELECT count FROM streak WHERE date = ? AND node_id = ?`, [date, nodeId], (err, row) => {
     if (row) {
       db.run(`UPDATE streak SET count = count + ? WHERE date = ? AND node_id = ?`, [delta, date, nodeId]);
     } else {
-      db.run(`INSERT INTO streak (date, node_id, count) VALUES (?, ?, ?)`, [date, nodeId, Math.max(0, delta)]);
+      db.run(`INSERT OR IGNORE INTO streak (date, node_id, count) VALUES (?, ?, ?)`, [date, nodeId, delta]);
     }
   });
   // Also update general streak (nodeId = 0)
@@ -62,7 +63,7 @@ function addStreak(date, nodeId, delta) {
       if (row) {
         db.run(`UPDATE streak SET count = count + ? WHERE date = ? AND node_id = 0`, [delta, date]);
       } else {
-        db.run(`INSERT INTO streak (date, node_id, count) VALUES (?, 0, ?)`, [date, Math.max(0, delta)]);
+        db.run(`INSERT OR IGNORE INTO streak (date, node_id, count) VALUES (?, 0, ?)`, [date, delta]);
       }
     });
   }

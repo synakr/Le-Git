@@ -182,7 +182,8 @@ let quote = document.querySelector('.quote');
 let author = document.querySelector('.author');
 
 const myQuotes = [
-        { quote: "Glory shines over the most caffeinated", author: "Md Sayan Akram" }
+        { quote: "Glory shines over the most caffeinated", author: "Md Sayan Akram" },
+        { quote: "Caffeine is a widely consumed psychoactive stimulant from the methylxanthine class, known for its eugeroic (wakefulness-promoting), ergogenic (performance-enhancing), and nootropic (cognitive-enhancing) properties.", author: "That Shepherd" }
     ];
 
     fetch(url)
@@ -1019,7 +1020,7 @@ async function renderStreakGraph(nodeId = 0) {
   if (nodeId && window.nodeNameMap && window.nodeNameMap[nodeId]) {
     label.innerHTML = `<span style='color:#22c55e;font-weight:600;'>${window.nodeNameMap[nodeId]}</span> streak (last 30 days)`;
   } else {
-    label.textContent = 'Le-Git Streaks';
+    label.textContent = '"LeGit Consistency Matters"';
   }
 }
 
