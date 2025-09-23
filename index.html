@@ -36,7 +36,13 @@
         <div id="streak-graph" style="display:flex;gap:2px;"></div>
         <div id="streak-graph-label" style="font-size:13px;color:#555;margin-top:6px;"></div>
       </div>
+      <!-- Random Quote Box -->
+      <div id="random-quote-box" style="margin:22px 0 0 0;padding:18px 22px;background:#23272f;border-radius:12px;box-shadow:0 2px 12px rgba(60,80,120,0.10);display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-height:80px;max-width:340px;">
+        <p class="quote" style="font-size:16px;font-style:italic;color:#38bdf8;margin:0 0 4px 0;">"Glory shines over the most caffeinated"</p>
+        <p class="author" style="font-size:14px;color:#4ade80;font-weight:500;margin:0;align-self:flex-end;">- Md Sayan Akram</p>
+      </div>
     </div>
+
     <!-- END sidebar -->
 
     <!-- STEP 3: Wrap main content in #main -->
@@ -169,8 +175,27 @@
 
 
 
+<!-- this script is for random quotes -->
+<script>
+const url = 'https://prem-k-r.github.io/multilingual-quotes-api/minified/en.json';
+let quote = document.querySelector('.quote');
+let author = document.querySelector('.author');
 
+const myQuotes = [
+        { quote: "Glory shines over the most caffeinated", author: "Md Sayan Akram" }
+    ];
 
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            const allQuotes = data.concat(myQuotes); // merge JSON + your quotes
+            let random = allQuotes[Math.floor(Math.random() * allQuotes.length)];
+            quote.textContent = `"${random.quote}"`;
+            author.textContent = `- ${random.author}`;
+            console.log(allQuotes);
+        })
+        .catch(err => console.error(err));
+</script>
 
 
 
