@@ -3,8 +3,14 @@ const path = require('path');
 const { db}= require('./src/db');
 const axios = require('axios');
 
+// For AI chatbot
+let openai;
+try { openai = require('openai'); } catch { openai = null; }
+
 require('dotenv').config();
 const apiKey = process.env.API_KEY;
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || process.env.OPENAI_SECRET;
 
 function createWindow () {
   const win = new BrowserWindow({
@@ -16,6 +22,25 @@ function createWindow () {
   win.loadFile('index.html');
   win.webContents.once('did-finish-load', () => sendAllNodes(win));
 }
+
+// --- AI Chatbot IPC Handler ---
+ipcMain.handle('ai-chatbot-query', async (event, userMsg) => {
+  if (!openai || !OPENAI_API_KEY) return 'AI not available (missing OpenAI key).';
+  try {
+    const configuration = new openai.Configuration({ apiKey: OPENAI_API_KEY });
+    const openaiClient = new openai.OpenAIApi(configuration);
+    const completion = await openaiClient.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant for the Le-Git app. Answer user doubts clearly and concisely.' },
+        { role: 'user', content: userMsg }
+      ]
+    });
+    return completion.data.choices[0].message.content.trim();
+  } catch (e) {
+    return 'Error: ' + (e.response?.data?.error?.message || e.message || 'Unknown error');
+  }
+});
 
 function sendAllNodes(winOrSender) {
   db.all(`SELECT * FROM nodes ORDER BY order_index ASC`, [], (err, rows) => {
