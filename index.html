@@ -48,7 +48,7 @@
     <!-- STEP 3: Wrap main content in #main -->
     <div id="main">
       <h1>Welcome to Le-Git</h1>
-      <h2>Your lecture tracker starts here!</h2>
+  <h2 id="typewriter" style="font-weight:500;color:#38bdf8;"></h2>
 
       <div id="video-player" style="margin-top:20px;"></div>
       <div id="nodes-container"></div>
@@ -195,6 +195,85 @@ const myQuotes = [
             console.log(allQuotes);
         })
         .catch(err => console.error(err));
+</script>
+
+<!-- Typewriter Animation Script -->
+<script>
+const typewriterEl = document.getElementById('typewriter');
+const typewriterStrings = [
+  'Your lecture tracker starts here!',
+  'Track your progress, stay motivated.',
+  'Ace your exams with smart revision!',
+  'Organize playlists and custom groups.',
+  'Never lose your study streak again!',
+  'Make learning fun and effective.'
+];
+let twIndex = 0;
+let charIndex = 0;
+let cursorVisible = true;
+let isErasing = false;
+let animationEnded = false;
+let animationStartTime = Date.now();
+
+function renderTypewriter(displayStr) {
+  typewriterEl.innerHTML = displayStr + '<span class="tw-cursor" style="color:#38bdf8;font-weight:700;">' + (cursorVisible ? '|' : '&nbsp;') + '</span>';
+}
+
+function endTypewriterLoop() {
+  let finalStr = typewriterStrings[0];
+  let blink = true;
+  function blinkFinalCursor() {
+    typewriterEl.innerHTML = finalStr + '<span class="tw-cursor" style="color:#38bdf8;font-weight:700;">' + (blink ? '|' : '&nbsp;') + '</span>';
+    blink = !blink;
+    if (animationEnded) setTimeout(blinkFinalCursor, 400);
+  }
+  animationEnded = true;
+  blinkFinalCursor();
+}
+
+function typeWriterLoop() {
+  if (!animationEnded && Date.now() - animationStartTime > 20000) {
+    animationEnded = true;
+    endTypewriterLoop();
+    return;
+  }
+  if (animationEnded) return;
+  const currentStr = typewriterStrings[twIndex];
+  if (isErasing) {
+    if (charIndex > 0) {
+      charIndex--;
+      renderTypewriter(currentStr.substring(0, charIndex));
+      setTimeout(typeWriterLoop, 40);
+    } else {
+      isErasing = false;
+      twIndex = (twIndex + 1) % typewriterStrings.length;
+      setTimeout(typeWriterLoop, 400);
+    }
+    return;
+  }
+  let displayStr = typewriterStrings[twIndex].substring(0, charIndex);
+  renderTypewriter(displayStr);
+  if (charIndex < typewriterStrings[twIndex].length) {
+    charIndex++;
+    setTimeout(typeWriterLoop, 120);
+  } else {
+    let blinkCount = 0;
+    function blinkCursor() {
+      cursorVisible = !cursorVisible;
+      renderTypewriter(displayStr);
+      blinkCount++;
+      if (blinkCount < 16) {
+        setTimeout(blinkCursor, 350);
+      } else {
+        cursorVisible = true;
+        isErasing = true;
+        setTimeout(typeWriterLoop, 400);
+      }
+    }
+    blinkCursor();
+  }
+}
+typeWriterLoop();
 </script>
 
 

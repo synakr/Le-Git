@@ -1,3 +1,87 @@
+.tab-btn {
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 18px;
+  margin-right: 6px;
+  background: #23272f;
+  color: #38bdf8;
+  cursor: pointer;
+  transition: background 0.25s cubic-bezier(.68,-0.55,.27,1.55), color 0.25s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.25s;
+  box-shadow: 0 2px 8px rgba(60,80,120,0.08);
+  position: relative;
+  outline: none;
+}
+.tab-btn.active {
+  background: #38bdf8;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(56,189,248,0.18);
+}
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: linear-gradient(90deg,#4ade80 60%,#38bdf8 100%);
+  border-radius: 2px;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+.tab-btn:not(.active):hover {
+  background: #23272f;
+  color: #4ade80;
+  box-shadow: 0 2px 12px rgba(56,189,248,0.10);
+}
+/* Tab Switcher Styles */
+.tab-btn {
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 18px;
+  margin-right: 6px;
+  background: #23272f;
+  color: #38bdf8;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.tab-btn.active {
+  background: #38bdf8;
+  color: #fff;
+}
+
+#revision-section {
+  background: #23272f;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(60,80,120,0.10);
+  padding: 18px 22px;
+  max-width: 600px;
+}
+.revision-item {
+  background: #181a1f;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(60,80,120,0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.star-btn {
+  font-size: 20px;
+  color: #555;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.star-btn.starred {
+  color: #facc15;
+}
 .ai-theme-window {
   /* Already themed, add extra shadow and border for pop effect */
   box-shadow: 0 8px 32px rgba(56,189,248,0.18), 0 2px 8px rgba(60,80,120,0.10);
