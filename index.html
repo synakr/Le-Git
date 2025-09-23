@@ -67,6 +67,26 @@
       <button id="close-info-popover" style="margin-top:14px;background:#38bdf8;color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:15px;cursor:pointer;">Close</button>
     </div>
 
+    <!-- AI Chatbot Icon and Chat Window -->
+    <div id="ai-chatbot-icon" class="ai-theme-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M8 15c1.333-2 6.667-2 8 0"/>
+        <circle cx="9" cy="10" r="1"/>
+        <circle cx="15" cy="10" r="1"/>
+      </svg>
+    </div>
+    <div id="ai-chatbot-window" class="ai-theme-window">
+      <div class="ai-theme-header">
+        AI Chatbot <button id="ai-chatbot-close" class="ai-theme-close">&times;</button>
+      </div>
+      <div id="ai-chatbot-messages" class="ai-theme-messages"></div>
+      <form id="ai-chatbot-form" class="ai-theme-form">
+        <input id="ai-chatbot-input" type="text" placeholder="Ask me anything..." autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+
 
 
 
@@ -81,6 +101,87 @@
 
     <script>
       const { ipcRenderer } = require('electron');
+
+      // --- AI Chatbot Draggable Icon & Chat Window ---
+      const aiIcon = document.getElementById('ai-chatbot-icon');
+      const aiWindow = document.getElementById('ai-chatbot-window');
+      const aiClose = document.getElementById('ai-chatbot-close');
+      const aiForm = document.getElementById('ai-chatbot-form');
+      const aiInput = document.getElementById('ai-chatbot-input');
+      const aiMessages = document.getElementById('ai-chatbot-messages');
+      let dragOffsetX = 0, dragOffsetY = 0, dragging = false;
+
+      // Drag logic
+      aiIcon.addEventListener('mousedown', (e) => {
+        dragging = true;
+        dragOffsetX = e.clientX - aiIcon.getBoundingClientRect().left;
+        dragOffsetY = e.clientY - aiIcon.getBoundingClientRect().top;
+        aiIcon.style.transition = 'none';
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        let x = e.clientX - dragOffsetX;
+        let y = e.clientY - dragOffsetY;
+        // Clamp to window
+        x = Math.max(0, Math.min(window.innerWidth - aiIcon.offsetWidth, x));
+        y = Math.max(0, Math.min(window.innerHeight - aiIcon.offsetHeight, y));
+        aiIcon.style.left = x + 'px';
+        aiIcon.style.top = y + 'px';
+        aiIcon.style.right = 'auto';
+        aiIcon.style.bottom = 'auto';
+        // Move chat window with icon
+        aiWindow.style.right = 'auto';
+        aiWindow.style.bottom = 'auto';
+        aiWindow.style.left = x + 'px';
+        aiWindow.style.top = (y - aiWindow.offsetHeight - 16) + 'px';
+      });
+      document.addEventListener('mouseup', () => {
+        if (dragging) {
+          dragging = false;
+          aiIcon.style.transition = '';
+          document.body.style.userSelect = '';
+        }
+      });
+
+      // Toggle chat window
+      aiIcon.addEventListener('click', (e) => {
+        if (dragging) return; // Don't open on drag
+        aiWindow.style.display = aiWindow.style.display === 'none' ? 'flex' : 'none';
+        // Position chat window above icon
+        const rect = aiIcon.getBoundingClientRect();
+        aiWindow.style.left = rect.left + 'px';
+        aiWindow.style.top = (rect.top - aiWindow.offsetHeight - 16) + 'px';
+        aiWindow.style.right = 'auto';
+        aiWindow.style.bottom = 'auto';
+      });
+      aiClose.addEventListener('click', () => {
+        aiWindow.style.display = 'none';
+      });
+
+      // Chat logic
+      function appendMsg(text, sender) {
+        const msg = document.createElement('div');
+        msg.className = 'ai-msg ' + sender;
+        msg.innerHTML = `<div class="bubble">${text}</div>`;
+        aiMessages.appendChild(msg);
+        aiMessages.scrollTop = aiMessages.scrollHeight;
+      }
+      aiForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const q = aiInput.value.trim();
+        if (!q) return;
+        appendMsg(q, 'user');
+        aiInput.value = '';
+        appendMsg('<span style="color:#aaa">Thinking...</span>', 'bot');
+        ipcRenderer.invoke('ai-chatbot-query', q).then(answer => {
+          aiMessages.lastChild.remove();
+          appendMsg(answer, 'bot');
+        }).catch(() => {
+          aiMessages.lastChild.remove();
+          appendMsg('Sorry, I could not get a response.', 'bot');
+        });
+      });
 
 
 
