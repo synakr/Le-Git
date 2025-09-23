@@ -1,7 +1,16 @@
+
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const { db}= require('./src/db');
 const axios = require('axios');
+
+// --- Rename node (playlist) ---
+ipcMain.on('rename-node', (event, data) => {
+  db.run(`UPDATE nodes SET name = ? WHERE id = ?`, [data.name, data.id], function(err) {
+    if (err) return console.error(err.message);
+    sendAllNodes(event.sender);
+  });
+});
 
 // For AI chatbot
 let openai;
