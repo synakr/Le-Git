@@ -25,18 +25,24 @@ function createWindow () {
 
 // --- AI Chatbot IPC Handler ---
 ipcMain.handle('ai-chatbot-query', async (event, userMsg) => {
-  if (!openai || !OPENAI_API_KEY) return 'AI not available (missing OpenAI key).';
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.GEMINI_KEY || process.env.GEMINI_SECRET;
+  if (!GEMINI_API_KEY) return 'AI not available (missing Gemini API key).';
   try {
-    const configuration = new openai.Configuration({ apiKey: OPENAI_API_KEY });
-    const openaiClient = new openai.OpenAIApi(configuration);
-    const completion = await openaiClient.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: 'You are a helpful assistant for the Le-Git app. Answer user doubts clearly and concisely.' },
-        { role: 'user', content: userMsg }
-      ]
-    });
-    return completion.data.choices[0].message.content.trim();
+    // Gemini Flash 2.5 API endpoint
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + GEMINI_API_KEY;
+    const payload = {
+      contents: [
+        { role: 'user', parts: [{ text: userMsg }] }
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1024
+      }
+    };
+    const res = await axios.post(url, payload);
+    // Gemini response parsing
+    const aiReply = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    return aiReply ? aiReply.trim() : 'No response from Gemini.';
   } catch (e) {
     return 'Error: ' + (e.response?.data?.error?.message || e.message || 'Unknown error');
   }
