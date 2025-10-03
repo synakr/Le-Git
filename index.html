@@ -973,17 +973,21 @@ typeWriterLoop();
         document.getElementById('video-player').innerHTML = `
           <div class="video-wrapper">
             <button class="close-video">×</button>
-            <iframe width="640" height="360"
-              src="https://www.youtube.com/embed/${data.videoId}?autoplay=1&rel=0"
-              frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            <iframe
+              width="560"
+              height="315"
+              src="https://www.youtube-nocookie.com/embed/${data.videoId}?rel=0&modestbranding=1&autoplay=1&controls=1"
+              title="YouTube video player"
+              frameborder="0"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
+              allowfullscreen>
+            </iframe>
           </div>
         `;
 
-        // Close button logic
         document.querySelector('.close-video').addEventListener('click', () => {
           document.getElementById('video-player').innerHTML = '';
         });
-
       });
       
       // Make video-player draggable
@@ -1024,9 +1028,14 @@ typeWriterLoop();
           <div class="video-wrapper">
             <div id="drag-handle">⇕</div>
             <button class="close-video">×</button>
-            <iframe width="100%" height="100%"
-            src="https://www.youtube.com/embed/${data.videoId}?autoplay=1&rel=0"
-            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            <iframe
+              width="100%" height="100%"
+              src="https://www.youtube-nocookie.com/embed/${data.videoId}?rel=0&modestbranding=1&autoplay=1&controls=1"
+              title="YouTube video player"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen>
+            </iframe>
           </div>
         `;
 
@@ -1045,11 +1054,11 @@ typeWriterLoop();
         makeDraggable(vp);
       });
 
-
-      // Info icon popover logic
+      // Info icon popover logic  
       const infoIcon = document.getElementById('info-icon');
       const infoPopover = document.getElementById('info-popover');
       const closeInfoBtn = document.getElementById('close-info-popover');
+
       infoIcon.addEventListener('click', () => {
         infoPopover.style.display = 'block';
       });
@@ -1061,6 +1070,7 @@ typeWriterLoop();
           infoPopover.style.display = 'none';
         }
       });
+
 // --- Streak Graph Logic (DB version) ---
 function getLast30Days() {
   const days = [];
